@@ -1,18 +1,5 @@
  # Scrapes BBC RSS
 
-# from bs4 import BeautifulSoup
-# import requests
-
-# url = "https://www.bbc.com/news"
-
-# response = requests.get(url)
-# soup = BeautifulSoup(response.text, "html.parser")
-
-# headings = soup.find_all(["h2", "h3"])
-
-# for heading in headings:
-#     print(heading.get_text(strip=True))
-
 from bs4 import BeautifulSoup
 import requests
 
@@ -40,3 +27,4 @@ if response.status_code == 200:
         print("-" * 50)
 else:
     print(f"Failed to fetch RSS feed. Status code: {response.status_code}")
+
