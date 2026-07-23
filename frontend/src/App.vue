@@ -89,7 +89,6 @@ const hasActiveFilters = computed(
     flaggedOnly.value,
 );
 
-// FIXED: function was missing
 function handleCountUpdate(payload: any) {
   if (typeof payload === "number") {
     filteredCount.value = payload;
