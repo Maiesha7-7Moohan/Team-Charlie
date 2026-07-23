@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, redirect
+from flask import Flask, request, render_template, redirect, url_for, abort
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -51,3 +51,33 @@ def upload_file():
 @app.route("/")
 def home():
     return "<h1>Team Charlie's Flask Server is Live!</h1> <a href='/upload'>Go to File Uploader</a>"
+
+# ------------------------------------------------------------------------
+# STATUS CODE & ERROR SAMPLES 
+# ------------------------------------------------------------------------
+
+@app.route("/dashboard")
+def dashboard():
+    # Simulating a scenario where a user tries to access the dashboard 
+    # but isn't logged in yet. We trigger a '401 Unauthorized' status code.
+    user_logged_in = False 
+    
+    if not user_logged_in:
+        abort(401) # This instantly stops execution and sends a 401 status code
+        
+    return "<h1>Welcome to the Dashboard</h1>"
+
+
+# ------------------------------------------------------------------------
+# CUSTOM ERROR PAGES 
+# ------------------------------------------------------------------------
+
+@app.errorhandler(401)
+def unauthorized_error(error):
+    return "<h1>401: Access Denied</h1><p>Please log in first before viewing the dashboard.</p>", 401
+
+
+@app.errorhandler(404)
+def not_found_error(error):
+    # Handles typing mistakes in the URL bar smoothly
+    return "<h1>404: Page Not Found</h1><p>Team Charlie hasn't built this page yet!</p>", 404
