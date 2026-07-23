@@ -65,7 +65,6 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import SearchBar from "./Components/SearchBar.vue";
-import FilterBar from "./Components/FilterBar.vue";
 import ArticleGrid from "./Components/ArticleGrid.vue";
 
 const showFilters = ref(false);
