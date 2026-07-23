@@ -25,6 +25,7 @@
 
 <style scoped> 
     .dashboard-card-container {
+        flex-wrap: wrap;
         margin-top: 20px;
         display: flex;
         justify-content: center;
