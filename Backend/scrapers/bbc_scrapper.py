@@ -20,7 +20,7 @@ url = "https://feeds.bbci.co.uk/news/rss.xml"
 
 response = requests.get(url)
 
-# Check if the request was successful
+# This response checks if the request was successful
 if response.status_code == 200:
     soup = BeautifulSoup(response.content, "xml")
 
