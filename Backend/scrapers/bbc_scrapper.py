@@ -31,6 +31,7 @@ if response.status_code == 200:
         description = item.description.text
         link = item.link.text
         pub_date = item.pubDate.text
+        link = item.link.text
 
         print(f"Title: {title}")
         print(f"Description: {description}")
