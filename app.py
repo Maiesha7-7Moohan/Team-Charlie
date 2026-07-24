@@ -1,5 +1,5 @@
 import os
-from flask import Flask, request, render_template, redirect, url_for, abort
+from flask import Flask, request, jsonify, abort
 from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
@@ -48,9 +48,12 @@ def upload_file():
         </form>
     """
 
-@app.route("/")
-def home():
-    return "<h1>Team Charlie's Flask Server is Live!</h1> <a href='/upload'>Go to File Uploader</a>"
+@app.route("/api/health")
+def health():
+    return jsonify({
+        "status": "healthy",
+        "message": "Team Charlie API is running!"  
+    }), 200
 
 # ------------------------------------------------------------------------
 # STATUS CODE & ERROR SAMPLES 
@@ -81,3 +84,6 @@ def unauthorized_error(error):
 def not_found_error(error):
     # Handles typing mistakes in the URL bar smoothly
     return "<h1>404: Page Not Found</h1><p>Team Charlie hasn't built this page yet!</p>", 404
+
+if __name__ == "__main__":
+    app.run(debug=True)
