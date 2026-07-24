@@ -1,8 +1,8 @@
 <template>
   <div class="chart-card">
-    <h3>Articles Published by Province</h3>
+    <h3>Reader Engagement Rate %</h3>
 
-    <div class="chart-wrapper">
+      <div class="chart-wrapper2">
         <Bar :data="chartData" :options="chartOptions" />
     </div>
   </div>
@@ -15,8 +15,7 @@ import {
   LinearScale,
   BarElement,
   Tooltip,
-  Legend,
-  Title
+  Legend
 } from "chart.js";
 
 import { Bar } from "vue-chartjs";
@@ -26,19 +25,16 @@ ChartJS.register(
   LinearScale,
   BarElement,
   Tooltip,
-  Legend,
-  Title
+  Legend
 );
 
 const chartData = {
-  labels: ["GP", "WC", "KZN", "EC", "LP", "MP", "NW", "FS", "NC"],
+  labels: ["FS", "NC", "NW", "MP", "LP", "EC", "KZN", "WC", "GP"],
   datasets: [
     {
-      label: "Articles",
-      data: [52, 39, 28, 24, 22, 20, 17, 12, 6],
-      backgroundColor: "#ff4d4f",
-      borderRadius: 4,
-      barThickness: 24
+      data: [11, 10, 8, 6.5, 6, 5.2, 4.2, 3.4, 2.6],
+      backgroundColor: "#4CAF50",
+      borderRadius: 4
     }
   ]
 };
@@ -46,12 +42,7 @@ const chartData = {
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-
-  layout: {
-    padding: {
-      bottom: 15
-    }
-  },
+  indexAxis: "y",
 
   plugins: {
     legend: {
@@ -61,47 +52,37 @@ const chartOptions = {
 
   scales: {
     x: {
-      grid: {
-        display: false
-      },
+      beginAtZero: true,
+      max: 12,
       ticks: {
-        padding: 10
+        callback: (value) => value + "%"
       }
     },
 
     y: {
-      beginAtZero: true,
-      max: 60,
-      ticks: {
-        stepSize: 10
+      grid: {
+        display: false
       }
     }
   }
-}
+};
 </script>
 
 <style scoped>
-.chart-wrapper {
-    position: relative;
-    height: 280px;
-    width: 100%;
+.chart-wrapper2 {
+    position:relative;
+    width:100%;
+    height:320px;
 }
 
 .chart-card{
-    /* margin-left: 20px; */
+    margin-left: 20px;
     margin-bottom: 20px;
     margin-top: 20px;
     height: 400px;
     padding: 20px;
-    width: 50%;
+    width: 700px;
     background-color: #F5F5F5;
     box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.chart-card h3 {
-  margin-bottom: 20px;
-  font-size: 16px;
-  color: #333;
-  font-weight: 600;
 }
 </style>

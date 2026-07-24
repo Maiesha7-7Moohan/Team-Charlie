@@ -30,7 +30,7 @@
         display: flex;
         justify-content: center;
         gap: 30px;
-        padding: 10px;
+        padding: 20px;
     }
 
     .dashboard-card-container h2{

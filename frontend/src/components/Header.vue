@@ -34,11 +34,11 @@
     background:#e53935;
     color:white;
     display:flex;
-    border-radius: 20px;
-    /* ---- */
-    /* width: 100%;
-    margin-top: -10px; */
-    /* ---- */
+    /* border-radius: 20px; */
+
+    width: 100%;
+    margin-top: -10px; 
+    margin-left: -10px;
     gap:18px;
     align-items:center;
     padding:8px 20px;
