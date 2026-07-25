@@ -1,4 +1,6 @@
 import os
+import json
+
 from flask import Flask, request, jsonify, abort
 from werkzeug.utils import secure_filename
 
@@ -54,6 +56,15 @@ def health():
         "status": "healthy",
         "message": "Team Charlie API is running!"  
     }), 200
+
+@app.route("/api/items", methods=["GET"])
+def get_items():
+    data_file = os.path.join(app.root_path, "data", "articles.json")
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        articles = json.load(file)
+
+    return jsonify(articles), 200
 
 # ------------------------------------------------------------------------
 # STATUS CODE & ERROR SAMPLES 

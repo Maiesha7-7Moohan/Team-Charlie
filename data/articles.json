@@ -1,0 +1,26 @@
+[
+  {
+    "id": 1,
+    "title": "Python Becomes One of the World's Most Popular Languages",
+    "author": "Jane Smith",
+    "source": "BBC News",
+    "summary": "Developers continue adopting Python for web development, AI and automation.",
+    "date": "2026-07-24"
+  },
+  {
+    "id": 2,
+    "title": "NASA Announces New Moon Mission",
+    "author": "John Brown",
+    "source": "Reuters",
+    "summary": "NASA has announced a new mission planned for the lunar surface.",
+    "date": "2026-07-23"
+  },
+  {
+    "id": 3,
+    "title": "Artificial Intelligence Changes Software Development",
+    "author": "Sarah Williams",
+    "source": "TechCrunch",
+    "summary": "AI tools are becoming common in software engineering workflows.",
+    "date": "2026-07-22"
+  }
+]
