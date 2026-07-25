@@ -6,40 +6,40 @@ from werkzeug.utils import secure_filename
 
 app = Flask(__name__)
 
-# Configure a folder where uploaded files will be saved
+# Configures a folder where uploaded files will be saved.
 UPLOAD_FOLDER = 'uploads'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
-# Create the uploads folder automatically if it doesn't exist yet
+# Creates the uploads folder automatically if it doesn't exist yet.
 if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
     if request.method == "POST":
-        # Check if the post request actually has the file part
+        # Checks if the post request actually has the file part.
         if 'file_input' not in request.files:
             return "No file selected", 400
             
         file = request.files['file_input']
         
-        # If the user submits without selecting a file
+        # If the user submits without selecting a file.
         if file.filename == '':
             return "No file selected", 400
             
         if file:
-            # secure_filename cleans up the file name (e.g., converts "../../hacked.exe" to "hacked.exe")
+            # secure_filename cleans up the file name (e.g., converts "../../hacked.exe" to "hacked.exe").
             filename = secure_filename(file.filename)
             
-            # Combine the upload folder path with the safe filename
+            # Combines the upload folder path with the safe filename.
             save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
             
-            # Save the file to your hard drive
+            # Saves the file to your hard drive.
             file.save(save_path)
             
             return f"<h1>File successfully uploaded!</h1><p>Saved to: {save_path}</p><a href='/upload'>Upload another</a>"
 
-    # If it's a GET request, display the upload form
+    # If it's a GET request, display the upload form.
     return """
         <!doctype html>
         <title>Upload a File</title>
@@ -50,6 +50,11 @@ def upload_file():
         </form>
     """
 
+# ------------------------------------------------------------------------
+# API ENDPOINTS
+# ------------------------------------------------------------------------
+
+# Checks that the server is running.
 @app.route("/api/health")
 def health():
     return jsonify({
@@ -57,14 +62,51 @@ def health():
         "message": "Team Charlie API is running!"  
     }), 200
 
-@app.route("/api/items", methods=["GET"])
-def get_items():
+# Loops through all available articles and returns
+# only the article whose ID matches the one in the URL.
+@app.route("/api/items/<int:item_id>", methods=["GET"])
+def get_item(item_id):
+
+    data_file = os.path.join(app.root_path, "data", "articles.json")
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        articles = json.load(file)
+        for article in articles:
+            if article["id"] == item_id:
+                return jsonify(article), 200
+
+        return jsonify({
+            "error": "Article not found"
+            }), 404
+
+# Checks articles that match a search term provided by a user.
+@app.route("/api/search", methods=["GET"])
+def search_articles():
+
+    search_term = request.args.get("q")
+
+    # Checks that the user actually searched for something.
+    if not search_term:
+        return jsonify({
+        "error": "Please provide a search term."
+    }), 400
+
     data_file = os.path.join(app.root_path, "data", "articles.json")
 
     with open(data_file, "r", encoding="utf-8") as file:
         articles = json.load(file)
 
-    return jsonify(articles), 200
+    results = []
+
+    for article in articles:
+        if search_term.lower() in article["title"].lower():
+            results.append(article)
+
+    return jsonify(results), 200
+
+
+
+
 
 # ------------------------------------------------------------------------
 # STATUS CODE & ERROR SAMPLES 
