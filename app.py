@@ -3,12 +3,14 @@ import json
 
 from flask import Flask, request, jsonify, abort
 from werkzeug.utils import secure_filename
+from flask_cors import CORS
 
 app = Flask(__name__)
+CORS(app)
 
 # Configures a folder where uploaded files will be saved.
-UPLOAD_FOLDER = 'uploads'
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
+UPLOAD_FOLDER = "uploads"
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
 # Creates the uploads folder automatically if it doesn't exist yet.
 if not os.path.exists(UPLOAD_FOLDER):
@@ -18,13 +20,13 @@ if not os.path.exists(UPLOAD_FOLDER):
 def upload_file():
     if request.method == "POST":
         # Checks if the post request actually has the file part.
-        if 'file_input' not in request.files:
+        if "file_input" not in request.files:
             return "No file selected", 400
             
-        file = request.files['file_input']
+        file = request.files["file_input"]
         
         # If the user submits without selecting a file.
-        if file.filename == '':
+        if file.filename == "":
             return "No file selected", 400
             
         if file:
@@ -32,7 +34,7 @@ def upload_file():
             filename = secure_filename(file.filename)
             
             # Combines the upload folder path with the safe filename.
-            save_path = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            save_path = os.path.join(app.config["UPLOAD_FOLDER"], filename)
             
             # Saves the file to your hard drive.
             file.save(save_path)
@@ -104,7 +106,124 @@ def search_articles():
 
     return jsonify(results), 200
 
+# Used to create a new article.
+@app.route("/api/items", methods=["POST"])
+def create_item():
 
+    data_file = os.path.join(app.root_path, "data", "articles.json")
+    payload = request.get_json(silent=True)
+
+    # Checks that correct fields are filled before creating a new article.
+    if payload is None:
+        return jsonify({
+            "error": "Request body must be valid JSON."
+        }), 400
+
+    required_fields = ["title", "author", "source", "date", "summary"]
+    missing_fields = [field for field in required_fields if not payload.get(field)]
+
+
+    if missing_fields:
+        return jsonify({
+            "error": "Missing required fields.",
+            "missing_fields": missing_fields
+        }), 400
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        articles = json.load(file)
+
+    # Ensures that all articles are numbered correctly. 
+    highest_id = 0
+
+    for article in articles:
+        if article.get("id", 0) > highest_id:
+            highest_id = article["id"]
+
+    new_id = highest_id + 1
+    new_article = {
+        "id": new_id,
+        "title": payload["title"],
+        "author": payload["author"],
+        "source": payload["source"],
+        "summary": payload["summary"],
+        "date": payload["date"]
+    }
+
+    articles.append(new_article)
+
+    with open(data_file, "w", encoding="utf-8") as file:
+        json.dump(articles, file, indent=2, ensure_ascii=False)
+        file.write("\n")
+
+    return jsonify(new_article), 201
+
+# Updates an existing article.
+@app.route("/api/items/<int:item_id>", methods=["PUT"])
+def update_item(item_id):
+
+    data_file = os.path.join(app.root_path, "data", "articles.json")
+    payload = request.get_json(silent=True)
+
+    if payload is None:
+        return jsonify({
+            "error": "Request body must be valid JSON."
+        }), 400
+
+    required_fields = ["title", "author", "source", "date", "summary"]
+    missing_fields = [field for field in required_fields if not payload.get(field)]
+
+    if missing_fields:
+        return jsonify({
+            "error": "Missing required fields.",
+            "missing_fields": missing_fields
+        }), 400
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        articles = json.load(file)
+
+    for article in articles:
+        if article["id"] == item_id:
+
+            article["title"] = payload["title"]
+            article["author"] = payload["author"]
+            article["source"] = payload["source"]
+            article["date"] = payload["date"]
+            article["summary"] = payload["summary"]
+
+            with open(data_file, "w", encoding="utf-8") as file:
+                json.dump(articles, file, indent=2, ensure_ascii=False)
+                file.write("\n")
+
+            return jsonify(article), 200
+
+    return jsonify({
+        "error": "Article not found."
+    }), 404
+
+# Deletes an article.
+@app.route("/api/items/<int:item_id>", methods=["DELETE"])
+def delete_item(item_id):
+
+    data_file = os.path.join(app.root_path, "data", "articles.json")
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        articles = json.load(file)
+
+    for article in articles:
+        if article["id"] == item_id:
+
+            articles.remove(article)
+
+            with open(data_file, "w", encoding="utf-8") as file:
+                json.dump(articles, file, indent=2, ensure_ascii=False)
+
+            return jsonify({
+                "message": "Article deleted successfully."
+            }), 200
+
+    return jsonify({
+        "error": "Article not found."
+    }), 404
 
 
 
