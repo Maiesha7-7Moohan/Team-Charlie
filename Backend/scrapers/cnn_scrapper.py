@@ -105,10 +105,6 @@ def extract_article(url):
 
         soup = BeautifulSoup(response.text, "html.parser")
 
-        # -----------------------
-        # Title
-        # -----------------------
-
         title = ""
 
         meta = soup.find(
@@ -127,10 +123,6 @@ def extract_article(url):
         if not title:
             return None
 
-        # -----------------------
-        # Summary
-        # -----------------------
-
         summary = ""
 
         meta = soup.find(
@@ -140,10 +132,6 @@ def extract_article(url):
 
         if meta:
             summary = meta.get("content", "")
-
-        # -----------------------
-        # Author
-        # -----------------------
 
         author = ""
 
@@ -161,10 +149,6 @@ def extract_article(url):
                 author = meta.get("content", "")
                 break
 
-        # -----------------------
-        # Published Date
-        # -----------------------
-
         published = ""
 
         meta = soup.find(
@@ -175,9 +159,6 @@ def extract_article(url):
         if meta:
             published = meta.get("content", "")
 
-        # -----------------------
-        # Image
-        # -----------------------
 
         image = ""
 
@@ -188,10 +169,6 @@ def extract_article(url):
 
         if meta:
             image = meta.get("content", "")
-
-        # -----------------------
-        # Article Body
-        # -----------------------
 
         article_tag = soup.find("article")
 
