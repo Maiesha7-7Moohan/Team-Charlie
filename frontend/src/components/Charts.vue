@@ -85,18 +85,33 @@ const chartOptions = {
     position: relative;
     height: 280px;
     width: 100%;
+    margin: 0 auto;
 }
 
 .chart-card{
-    /* margin-left: 20px; */
-    margin-bottom: 20px;
-    margin-top: 20px;
-    height: 400px;
-    padding: 20px;
-    width: 50%;
-    background-color: #F5F5F5;
-    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
+    flex:1;
+    width:100%;
+    min-width:0;
+    height:400px;
+    background:#F5F5F5;
+    padding:20px;
+    border-radius:8px;
+    box-shadow:2px 4px 8px rgba(0,0,0,.15);
+    box-sizing:border-box;
+    overflow:hidden;
 }
+
+.chart-wrapper{
+    position:relative;
+    width:100%;
+    height:320px;
+}
+
+.chart-wrapper canvas{
+    width:100% !important;
+    height:100% !important;
+}
+
 
 .chart-card h3 {
   margin-bottom: 20px;

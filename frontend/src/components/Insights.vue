@@ -1,8 +1,8 @@
 <template>
-  <div class="chart-card">
+  <div class="pie-chart-card">
     <!-- <h3>Articles by Province</h3> -->
 
-    <div class="chart-container">
+    <div class="pie-wrapper">
       <Pie
         :data="chartData"
         :options="chartOptions"
@@ -68,14 +68,26 @@ const chartOptions = {
 </script>
 
 <style scoped>
-.chart-card{
+.pie-chart-card{
+    flex: 1;
+    min-width: 320px;
+    width: 100%;
+    background: #F5F5F5;
     padding: 20px;
-    background-color: #F5F5F5;
-    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    box-shadow: 2px 4px 8px rgba(0,0,0,.15);
+    box-sizing: border-box;
+    overflow: hidden;
 }
 
-.chart-container{
-    width:95%;
-    height:350px;
+.pie-wrapper{
+    position: relative;
+    width: 100%;
+    height: 450px;
+}
+
+.pie-wrapper canvas{
+    width:100% !important;
+    height:100% !important;
 }
 </style>

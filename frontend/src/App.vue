@@ -48,6 +48,8 @@ import ProvinceTable from "./components/ProvinceTable.vue";
 
 <style>
 
+
+
 /* body{
   font-family: Arial, Helvetica, sans-serif;
   background:#ececec;
@@ -61,20 +63,28 @@ import ProvinceTable from "./components/ProvinceTable.vue";
 /* ---------- Charts ---------- */
 
 .charts-row{
-  display: flex;
-  gap: 20px;
-  margin:20px 0;
-  padding: 20px;
+    display:flex;
+    gap:20px;
+    padding:20px;
+    align-items:stretch;
+}
+
+@media (max-width:900px){
+
+    .charts-row{
+        flex-direction:column;
+    }
+
 }
 
 /* ---------- Bottom Section ---------- */
 
 .bottom-row{
-  display:grid;
-  padding: 10px 10px 10px 25px;
-  grid-template-columns:1fr 2fr;
-  gap:40px;
-  margin:20px 0;
+    display:flex;
+    gap:20px;
+    align-items:flex-start;
+    margin-top:25px;
+    padding: 0 25px;
 }
 
 .foot p{
@@ -96,11 +106,20 @@ import ProvinceTable from "./components/ProvinceTable.vue";
 
 }
 
+
 @media (max-width:768px){
 
   .dashboard{
     width:95%;
   }
+
+}
+
+@media (max-width:768px){
+
+    .charts-row{
+        grid-template-columns:1fr;
+    }
 
 }
 </style>

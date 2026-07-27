@@ -73,16 +73,42 @@ const chartOptions = {
     position:relative;
     width:100%;
     height:320px;
+    margin: 0 auto;
 }
 
 .chart-card{
-    margin-left: 20px;
-    margin-bottom: 20px;
-    margin-top: 20px;
-    height: 400px;
-    padding: 20px;
-    width: 700px;
-    background-color: #F5F5F5;
-    box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
+    flex:1;
+    width:100%;
+    min-width:0;
+    height:400px;
+    background:#F5F5F5;
+    padding:20px;
+    border-radius:8px;
+    box-shadow:2px 4px 8px rgba(0,0,0,.15);
+    box-sizing:border-box;
+    overflow:hidden;
+}
+
+.chart-wrapper2{
+    position:relative;
+    width:100%;
+    height:320px;
+}
+
+.chart-wrapper2 canvas{
+    width:100% !important;
+    height:100% !important;
+}
+
+.chart-card{
+    flex:1;
+    min-width:350px;
+}
+
+.chart-card h3 {
+  margin-bottom: 20px;
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
 }
 </style>

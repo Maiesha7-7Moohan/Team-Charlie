@@ -122,31 +122,51 @@ growth:"+5%"
 <style scoped>
 
 .table-card{
-margin-right: 20px;
-background-color: #F5F5F5;
-box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
-padding:20px;
+    flex:2;
+    min-width:350px;
+    width:100%;
+    background:#F5F5F5;
+    padding:20px;
+    border-radius:10px;
+    box-shadow:2px 4px 8px rgba(0,0,0,.15);
+    box-sizing:border-box;
+    overflow-x:auto;
+}
+
+.table-card h3{
+  margin-bottom: 20px;
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
+}
+
+.table-card tr th{
+  font-size: 16px;
+  color: #333;
+  font-weight: 600;
 }
 
 table{
-width:100%;
-border-collapse:collapse;
+    width:100%;
+    border-collapse:collapse;
+    min-width:650px;
+
 }
 
 th{
-/* background:#efefef; */
-padding:12px;
-text-align:left;
+  /* background:#efefef; */
+  padding:12px;
+  text-align:left;
 }
 
 td{
-padding:12px;
-border-bottom:1px solid #e5e5e5;
+  padding:12px;
+  border-bottom:1px solid #e5e5e5;
 }
 
 .growth{
-color:#2e7d32;
-font-weight:600;
+  color:#2e7d32;
+  font-weight:600;
 }
 
 </style>
