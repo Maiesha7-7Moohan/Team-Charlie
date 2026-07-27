@@ -1,6 +1,8 @@
 import os
 import json
+import requests
 
+from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify, abort
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
@@ -105,6 +107,15 @@ def search_articles():
             results.append(article)
 
     return jsonify(results), 200
+
+@app.route("/api/items", methods=["GET"])
+def get_items():
+    data_file = os.path.join(app.root_path, "data", "articles.json")
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        articles = json.load(file)
+
+    return jsonify(articles), 200
 
 # Used to create a new article.
 @app.route("/api/items", methods=["POST"])
@@ -223,9 +234,99 @@ def delete_item(item_id):
 
     return jsonify({
         "error": "Article not found."
-    }), 404
+    }), 40
 
+# Our little star, the scraper.
+@app.route("/api/scrape", methods=["POST"])
+def scrape_articles():
 
+    data_file = os.path.join(app.root_path, "data", "articles.json")
+
+    # TODO:
+    # Wait for website URL from teammates.
+    # Download HTML using requests.
+    # Parse HTML using BeautifulSoup.
+    # Extract article information.
+    # Save articles to articles.json.
+
+    return jsonify({
+        "message": "Scraper endpoint is ready. Waiting for website details."
+    }), 200
+    
+@app.route("/api/statistics", methods=["GET"])
+def get_statistics():
+
+    data_file = os.path.join(app.root_path, "data", "articles.json")
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        articles = json.load(file)
+
+    sources = set()
+
+    for article in articles:
+        sources.add(article["source"])
+
+    return jsonify({
+        "total_articles": len(articles),
+        "total_sources": len(sources)
+    }), 200
+    
+@app.route("/api/websites", methods=["GET"])
+def get_websites():
+
+    data_file = os.path.join(app.root_path, "data", "websites.json")
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        websites = json.load(file)
+
+    return jsonify(websites), 200
+    
+# Adds a new website to the list of websites to scrape.
+@app.route("/api/websites", methods=["POST"])
+def add_website():
+
+    data_file = os.path.join(app.root_path, "data", "websites.json")
+    payload = request.get_json(silent=True)
+
+    if payload is None:
+        return jsonify({
+            "error": "Request body must be valid JSON."
+        }), 400
+
+    required_fields = ["name", "url"]
+    missing_fields = [field for field in required_fields if not payload.get(field)]
+
+    if missing_fields:
+        return jsonify({
+            "error": "Missing required fields.",
+            "missing_fields": missing_fields
+        }), 400
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        websites = json.load(file)
+
+    new_website = {
+        "name": payload["name"],
+        "url": payload["url"]
+    }
+
+    websites.append(new_website)
+
+    with open(data_file, "w", encoding="utf-8") as file:
+        json.dump(websites, file, indent=2, ensure_ascii=False)
+
+    return jsonify(new_website), 201
+
+# Returns the scraping history.
+@app.route("/api/history", methods=["GET"])
+def get_history():
+
+    data_file = os.path.join(app.root_path, "data", "history.json")
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        history = json.load(file)
+
+    return jsonify(history), 200
 
 # ------------------------------------------------------------------------
 # STATUS CODE & ERROR SAMPLES 
@@ -258,4 +359,4 @@ def not_found_error(error):
     return "<h1>404: Page Not Found</h1><p>Team Charlie hasn't built this page yet!</p>", 404
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    app.run(debug=True) 
