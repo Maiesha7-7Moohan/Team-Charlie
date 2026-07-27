@@ -57,16 +57,6 @@
         <button class="btn-black">SEARCH</button>
       </div>
       <div class="search-actions">
-        <select
-          :value="sort"
-          @change="
-            emit('update:sort', ($event.target as HTMLSelectElement).value)
-          "
-        >
-          <option value="newest">Newest</option>
-          <option value="collected">Collected</option>
-          <option value="relevance">Relevance</option>
-        </select>
         <button
           v-if="search || hasActiveFilters"
           class="btn-clear"
@@ -125,18 +115,34 @@ const emit = defineEmits([
 }
 .brand {
   display: flex;
-  gap: 8px;
+  gap: 0;
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.08em;
+  border: 1.5px solid #111;
 }
 .brand-orange {
-  background: #ff5a1f;
-  color: #111;
-  padding: 3px 6px;
+  background: linear-gradient(
+    90deg,
+    #ff5a1f 0%,
+    #ff5a1f 18%,
+    #2d5bff 18%,
+    #2d5bff 36%,
+    #22c55e 36%,
+    #22c55e 54%,
+    #7c3aed 54%,
+    #7c3aed 72%,
+    #facc15 72%,
+    #facc15 100%
+  );
+  color: #fff;
+  padding: 4px 8px;
+  text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
 }
 .brand-muted {
-  color: #999;
+  color: #111;
+  background: #fff;
+  padding: 4px 8px;
 }
 .v-divider {
   width: 1px;
@@ -150,13 +156,17 @@ const emit = defineEmits([
   color: #666;
 }
 .flagged-btn {
-  color: #ff5a1f;
+  color: #111;
   cursor: pointer;
-  opacity: 0.6;
+  opacity: 0.8;
+  background: #facc15;
+  border: 1px solid #111;
+  padding: 2px 6px;
+  font-weight: 700;
 }
 .flagged-btn.active {
-  opacity: 1;
-  text-decoration: underline;
+  background: #ef4444;
+  color: #fff;
 }
 .muted {
   color: #aaa;
@@ -173,10 +183,10 @@ const emit = defineEmits([
   gap: 5px;
 }
 .dot {
-  width: 6px;
-  height: 6px;
+  width: 8px;
+  height: 8px;
   background: #22c55e;
-  border-radius: 50%;
+  border: 1px solid #111;
 }
 .search-bar {
   padding: 14px 16px;
@@ -184,6 +194,7 @@ const emit = defineEmits([
   gap: 12px;
   align-items: center;
   background: #fefefd;
+  width: 100%;
 }
 .filter-trigger-btn {
   height: 38px;
@@ -197,6 +208,7 @@ const emit = defineEmits([
   align-items: center;
   gap: 8px;
   cursor: pointer;
+  flex-shrink: 0;
 }
 .filter-trigger-btn:hover,
 .filter-trigger-btn.active {
@@ -211,11 +223,11 @@ const emit = defineEmits([
 }
 .search-box {
   flex: 1;
-  max-width: 720px;
   display: flex;
   height: 38px;
   border: 1.5px solid #111;
   background: #fff;
+  min-width: 0;
 }
 .search-input-wrap {
   flex: 1;
@@ -223,6 +235,7 @@ const emit = defineEmits([
   align-items: center;
   padding: 0 14px;
   gap: 10px;
+  min-width: 0;
 }
 .search-input-wrap input {
   flex: 1;
@@ -231,6 +244,7 @@ const emit = defineEmits([
   font-family: "IBM Plex Mono", monospace;
   font-size: 12px;
   background: transparent;
+  min-width: 0;
 }
 .btn-black {
   background: #111;
@@ -241,12 +255,14 @@ const emit = defineEmits([
   padding: 0 22px;
   border: none;
   cursor: pointer;
+  border-left: 4px solid #ff5a1f;
+  flex-shrink: 0;
 }
 .search-actions {
   display: flex;
   gap: 8px;
   align-items: center;
-  margin-left: auto;
+  flex-shrink: 0;
 }
 .search-actions select {
   height: 38px;
@@ -259,10 +275,11 @@ const emit = defineEmits([
 .btn-clear {
   height: 38px;
   padding: 0 10px;
-  border: 1.5px solid #e5e2de;
-  background: #fff;
+  border: 1.5px solid #111;
+  background: #facc15;
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
+  font-weight: 700;
   cursor: pointer;
 }
 </style>
