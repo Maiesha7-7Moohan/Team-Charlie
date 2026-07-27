@@ -33,7 +33,7 @@ import ProvinceTable from "./components/ProvinceTable.vue";
 
       <!-- Footer Cards -->
       <FooterCards />
-      <br><br><br><br><br><br><br><br><br><br><br><br>
+      <br><br><br><br><br><br>
       <div class="foot">
         <hr>
         <p>
