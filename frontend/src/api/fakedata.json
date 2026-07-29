@@ -1,0 +1,48 @@
+[
+  {
+    "id": 1,
+    "title": "Central banks signal coordinated pause as inflation data diverges",
+    "content": "Fed, ECB, and Bank of England officials have all indicated rates will hold through Q3 as diverging CPI readings complicate a unified policy path.",
+    "source_name": "reuters.com",
+    "author": "Sarah Chen",
+    "url": "https://reuters.com/article/123",
+    "scraped_at": "2026-07-21 09:22",
+    "keywords": ["monetary policy", "fed", "inflation"]
+  },
+  {
+    "id": 2,
+    "title": "Pentagon confirms deployment of additional electronic warfare units",
+    "content": "Three additional EW battalions will be pre-positioned in eastern Europe.",
+    "source_name": "politico.com",
+    "url": "https://politico.com/article/456",
+    "scraped_at": "2026-07-21 09:01",
+    "keywords": ["nato", "security"]
+  },
+  {
+    "id": 3,
+    "title": "OpenAI competitor Mistral raises \u20ac600m at \u20ac6bn valuation",
+    "content": "The Series C round was led by General Atlantic and is the largest in Europe this year.",
+    "source_name": "bloomberg.com",
+    "url": "https://bloomberg.com/article/789",
+    "scraped_at": "2026-07-21 07:55",
+    "keywords": ["ai", "startups"]
+  },
+  {
+    "id": 4,
+    "title": "Arctic ice extent hits record July low as Greenland melt accelerates",
+    "content": "July sea-ice extent is 340,000 km\u00b2 below the previous record low for this date.",
+    "source_name": "theguardian.com",
+    "url": "https://theguardian.com/article/101",
+    "scraped_at": "2026-07-20 18:44",
+    "keywords": ["arctic", "climate"]
+  },
+  {
+    "id": 5,
+    "title": "WHO declares mpox variant clade Ib a public health emergency",
+    "content": "The emergency declaration triggers accelerated vaccine-sharing and surveillance protocols.",
+    "source_name": "apnews.com",
+    "url": "https://apnews.com/article/202",
+    "scraped_at": "2026-07-20 15:31",
+    "keywords": ["who", "health"]
+  }
+]
