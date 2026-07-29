@@ -1,80 +1,85 @@
 <template>
   <transition name="slide">
-    <div v-if="isOpen" class="filter-bar">
-      <div class="filter-header">
-        <span>FILTERS</span><span class="close" @click="emit('close')">✕</span>
-      </div>
-      <div class="filter-section">
-        <div class="search-input">
-          <span>⌕</span
-          ><input
-            :value="search"
-            @input="
-              emit('update:search', ($event.target as HTMLInputElement).value)
-            "
-            placeholder="Search..."
-          />
+    <div v-if="isOpen" class="filter-overlay" @click.self="emit('close')">
+      <div class="filter-backdrop" @click="emit('close')"></div>
+
+      <div class="filter-bar">
+        <div class="filter-header">
+          <span>FILTERS</span
+          ><span class="close" @click="emit('close')">✕</span>
         </div>
-      </div>
-      <div class="filter-section">
-        <label class="label">SORT BY</label
-        ><select
-          :value="sort"
-          @change="
-            emit('update:sort', ($event.target as HTMLSelectElement).value)
-          "
-        >
-          <option value="newest">Newest</option>
-          <option value="collected">Collected</option>
-          <option value="relevance">Relevance</option>
-        </select>
-      </div>
-      <div class="filter-section">
-        <label class="label">CATEGORY</label>
-        <div class="category-list">
-          <div
-            v-for="cat in categories"
-            :key="cat"
-            class="cat-item"
-            :class="{ active: category === cat }"
-            @click="emit('update:category', cat)"
-          >
-            {{ cat }}
+        <div class="filter-section">
+          <div class="search-input">
+            <span>⌕</span
+            ><input
+              :value="search"
+              @input="
+                emit('update:search', ($event.target as HTMLInputElement).value)
+              "
+              placeholder="Search..."
+            />
           </div>
         </div>
-      </div>
-      <div class="filter-section">
-        <label class="label">STATUS</label
-        ><label v-for="s in statusOptions" :key="s" class="check"
-          ><input
-            type="checkbox"
-            :checked="status.includes(s)"
-            @change="toggleStatus(s)"
-          />
-          {{ s }}</label
-        >
-      </div>
-      <div class="filter-section">
-        <label class="label">PRIORITY</label
-        ><label v-for="p in priorityOptions" :key="p" class="check"
-          ><input
-            type="checkbox"
-            :checked="priority.includes(p)"
-            @change="togglePriority(p)"
-          />
-          {{ p }}</label
-        >
-      </div>
-      <div class="filter-actions">
-        <button
-          class="btn-clear-full"
-          @click="
-            emit('clear');
-            emit('close');
-          "
-        >
-          CLEAR ALL FILTERS
-        </button>
+        <div class="filter-section">
+          <label class="label">SORT BY</label
+          ><select
+            :value="sort"
+            @change="
+              emit('update:sort', ($event.target as HTMLSelectElement).value)
+            "
+          >
+            <option value="newest">Newest</option>
+            <option value="collected">Collected</option>
+            <option value="relevance">Relevance</option>
+          </select>
+        </div>
+        <div class="filter-section">
+          <label class="label">CATEGORY</label>
+          <div class="category-list">
+            <div
+              v-for="cat in categories"
+              :key="cat"
+              class="cat-item"
+              :class="{ active: category === cat }"
+              @click="emit('update:category', cat)"
+            >
+              {{ cat }}
+            </div>
+          </div>
+        </div>
+        <div class="filter-section">
+          <label class="label">STATUS</label
+          ><label v-for="s in statusOptions" :key="s" class="check"
+            ><input
+              type="checkbox"
+              :checked="status.includes(s)"
+              @change="toggleStatus(s)"
+            />
+            {{ s }}</label
+          >
+        </div>
+        <div class="filter-section">
+          <label class="label">PRIORITY</label
+          ><label v-for="p in priorityOptions" :key="p" class="check"
+            ><input
+              type="checkbox"
+              :checked="priority.includes(p)"
+              @change="togglePriority(p)"
+            />
+            {{ p }}</label
+          >
+        </div>
+        <div class="filter-actions">
+          <button
+            class="btn-clear-full"
+            @click="
+              emit('clear');
+              emit('close');
+            "
+          >
+            CLEAR ALL FILTERS
+          </button>
+        </div>
       </div>
     </div>
   </transition>
@@ -125,6 +130,20 @@ function togglePriority(val: string) {
 </script>
 
 <style scoped>
+.filter-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+}
+
+.filter-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 17, 17, 0.15);
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+}
+
 .filter-bar {
   position: absolute;
   left: 16px;

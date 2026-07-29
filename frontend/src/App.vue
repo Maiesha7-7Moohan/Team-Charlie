@@ -1,63 +1,89 @@
 <template>
-  <div class="app-root">
-    <SearchBar
-      :count="filteredCount"
-      :flagged-total="flaggedTotal"
-      :flagged-only="flaggedOnly"
-      :sync-time="syncTime"
-      :search="searchQuery"
-      :sort="sortBy"
-      :show-filters="showFilters"
-      :has-active-filters="hasActiveFilters"
-      @update:search="searchQuery = $event"
-      @update:sort="sortBy = $event"
-      @toggle-filters="showFilters = !showFilters"
-      @toggle-flagged="flaggedOnly = !flaggedOnly"
-      @clear="clearAll"
-    />
+  <div class="page-root">
+    <!-- ==================== DASHBOARD (FIRST) ==================== -->
+    <div class="dashboard-section">
+      <Header />
 
-    <div class="main-layout">
-      <div
-        v-if="showFilters"
-        class="filter-overlay"
-        @click.self="showFilters = false"
-      >
-        <FilterBar
-          :is-open="showFilters"
+      <main class="dashboard">
+        <!-- Statistics Cards -->
+        <Cards />
+
+        <!-- Charts -->
+        <section class="charts-row">
+          <Charts />
+          <EngagementChart />
+        </section>
+
+        <!-- Bottom Section -->
+        <section class="bottom-row">
+          <Insights />
+          <ProvinceTable />
+        </section>
+      </main>
+    </div>
+
+    <!-- ==================== COLLECTION (SECOND, SAME PAGE) ==================== -->
+    <div class="app-root">
+      <SearchBar
+        :count="filteredCount"
+        :flagged-total="flaggedTotal"
+        :flagged-only="flaggedOnly"
+        :sync-time="syncTime"
+        :search="searchQuery"
+        :sort="sortBy"
+        :show-filters="showFilters"
+        :has-active-filters="hasActiveFilters"
+        @update:search="searchQuery = $event"
+        @update:sort="sortBy = $event"
+        @toggle-filters="showFilters = !showFilters"
+        @toggle-flagged="flaggedOnly = !flaggedOnly"
+        @clear="clearAll"
+      />
+
+      <div class="main-layout">
+        <div
+          v-if="showFilters"
+          class="filter-overlay"
+          @click.self="showFilters = false"
+        >
+          <FilterBar
+            :is-open="showFilters"
+            :search="searchQuery"
+            :sort="sortBy"
+            :category="selectedCategory"
+            :status="selectedStatus"
+            :priority="selectedPriority"
+            @update:search="searchQuery = $event"
+            @update:sort="sortBy = $event"
+            @update:category="selectedCategory = $event"
+            @update:status="selectedStatus = $event"
+            @update:priority="selectedPriority = $event"
+            @close="showFilters = false"
+            @clear="clearAll"
+          />
+        </div>
+
+        <ArticleGrid
           :search="searchQuery"
           :sort="sortBy"
           :category="selectedCategory"
-          :status="selectedStatus"
-          :priority="selectedPriority"
-          @update:search="searchQuery = $event"
-          @update:sort="sortBy = $event"
-          @update:category="selectedCategory = $event"
-          @update:status="selectedStatus = $event"
-          @update:priority="selectedPriority = $event"
-          @close="showFilters = false"
-          @clear="clearAll"
+          :flagged-only="flaggedOnly"
+          @update:count="handleCountUpdate"
+          @search-tag="searchQuery = $event"
         />
       </div>
 
-      <ArticleGrid
-        :search="searchQuery"
-        :sort="sortBy"
-        :category="selectedCategory"
-        :flagged-only="flaggedOnly"
-        @update:count="handleCountUpdate"
-        @search-tag="searchQuery = $event"
-      />
-    </div>
-
-    <div class="footer">
-      <div class="footer-left">
-        <span class="live"><span class="dot"></span>LIVE COLLECTION ACTIVE</span
-        ><span
-          >{{ filteredCount }} articles • {{ uniqueSources }} sources •
-          {{ flaggedCount }} flagged</span
-        >
+      <div class="footer">
+        <div class="footer-left">
+          <span class="live"
+            ><span class="dot"></span>LIVE COLLECTION ACTIVE</span
+          ><span
+            >{{ filteredCount }} articles • {{ uniqueSources }} sources •
+            {{ flaggedCount }} flagged</span
+          >
+        </div>
+        <div>Miscellaneous v0.4.1 © 2026</div>
       </div>
-      <div>Miscellaneous v0.4.1 © 2026</div>
     </div>
   </div>
 </template>
@@ -67,6 +93,12 @@ import { ref, computed } from "vue";
 import SearchBar from "./Components/SearchBar.vue";
 import FilterBar from "./Components/FilterBar.vue";
 import ArticleGrid from "./Components/ArticleGrid.vue";
+import Header from "./Components/Header.vue";
+import Cards from "./Components/Cards.vue";
+import Charts from "./Components/Charts.vue";
+import EngagementChart from "./Components/EngagementChart.vue";
+import Insights from "./Components/Insights.vue";
+import ProvinceTable from "./Components/ProvinceTable.vue";
 
 const showFilters = ref(false);
 const searchQuery = ref("");
@@ -112,6 +144,46 @@ function clearAll() {
 </script>
 
 <style scoped>
+.page-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-section {
+  background: #ffffff;
+  width: 100%;
+}
+.dashboard {
+  padding: 0;
+  background: #fff;
+}
+.dashboard-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 20px;
+  align-items: stretch;
+}
+.charts-row {
+  display: flex;
+  gap: 20px;
+  padding: 0 20px;
+  flex-wrap: wrap;
+}
+.charts-row > * {
+  flex: 1;
+}
+.bottom-row {
+  display: flex;
+  gap: 20px;
+  padding: 0 20px 20px 20px;
+  flex-wrap: wrap;
+}
+.bottom-row > * {
+  flex: 1;
+}
+
+/* --- Collection Section --- Keeps original look --- */
 .app-root {
   background: #f7f7f5;
   min-height: 100vh;
