@@ -3,22 +3,22 @@
     <div class="dashboard-card1">
       <p>Total Articles</p>
       <h2>146.2k</h2>
-      <p>+4.1%all provinces</p>
+      <p>+4.1% all provinces</p>
     </div>
     <div class="dashboard-card2">
       <p>Total Pageviews</p>
       <h2>45.6M</h2>
-      <p>+5.9%trailing 12 months</p>
+      <p>+5.9% trailing 12 months</p>
     </div>
     <div class="dashboard-card3">
       <p>Active Outlets</p>
       <h2>71</h2>
-      <p>+3.4%tracked nationally</p>
+      <p>+3.4% tracked nationally</p>
     </div>
     <div class="dashboard-card4">
       <p>Avg Engagement</p>
       <h2>6.2%</h2>
-      <p>-0.3%shares + comments</p>
+      <p>-0.3% shares + comments</p>
     </div>
   </div>
 </template>
