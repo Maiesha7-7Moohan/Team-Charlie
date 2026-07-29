@@ -1,12 +1,11 @@
 <template>
   <transition name="slide">
-    <div v-if="isOpen" class="filter-overlay" @click.self="emit('close')">
+    <div v-if="isOpen" class="filter-overlay" @click.self="emit('close')"
       <div class="filter-backdrop" @click="emit('close')"></div>
-
+      
       <div class="filter-bar">
         <div class="filter-header">
-          <span>FILTERS</span
-          ><span class="close" @click="emit('close')">✕</span>
+          <span>FILTERS</span><span class="close" @click="emit('close')">✕</span>
         </div>
         <div class="filter-section">
           <div class="search-input">
