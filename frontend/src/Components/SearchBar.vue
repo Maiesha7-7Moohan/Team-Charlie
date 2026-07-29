@@ -122,7 +122,23 @@ const emit = defineEmits([
   border: 1.5px solid #111;
 }
 .brand-orange {
+<<<<<<< HEAD
   background: linear-gradient(90deg, #2d5bff 36%);
+=======
+  background: linear-gradient(
+    90deg,
+    #ff5a1f 0%,
+    #ff5a1f 18%,
+    #2d5bff 18%,
+    #2d5bff 36%,
+    #22c55e 36%,
+    #22c55e 54%,
+    #7c3aed 54%,
+    #7c3aed 72%,
+    #facc15 72%,
+    #facc15 100%
+  );
+>>>>>>> ce16e9e0d48e69b6de39ed309f6c7028e2ec0e47
   color: #fff;
   padding: 4px 8px;
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.3);
