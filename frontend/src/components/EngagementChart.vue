@@ -1,13 +1,11 @@
 <template>
   <div class="chart-card">
     <h3>Reader Engagement Rate %</h3>
-
-      <div class="chart-wrapper2">
-        <Bar :data="chartData" :options="chartOptions" />
+    <div class="chart-wrapper">
+      <Bar :data="chartData" :options="chartOptions" />
     </div>
   </div>
 </template>
-
 <script setup>
 import {
   Chart as ChartJS,
@@ -15,100 +13,74 @@ import {
   LinearScale,
   BarElement,
   Tooltip,
-  Legend
+  Legend,
 } from "chart.js";
-
+ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 import { Bar } from "vue-chartjs";
-
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Tooltip,
-  Legend
-);
-
 const chartData = {
   labels: ["FS", "NC", "NW", "MP", "LP", "EC", "KZN", "WC", "GP"],
   datasets: [
     {
       data: [11, 10, 8, 6.5, 6, 5.2, 4.2, 3.4, 2.6],
-      backgroundColor: "#4CAF50",
-      borderRadius: 4
-    }
-  ]
+      backgroundColor: [
+        "#7c3aed",
+        "#2d5bff",
+        "#06b6d4",
+        "#22c55e",
+        "#facc15",
+        "#f97316",
+        "#ff5a1f",
+        "#ef4444",
+        "#111",
+      ],
+      borderRadius: 4,
+    },
+  ],
 };
-
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   indexAxis: "y",
-
-  plugins: {
-    legend: {
-      display: false
-    }
-  },
-
+  plugins: { legend: { display: false } },
   scales: {
-    x: {
-      beginAtZero: true,
-      max: 12,
-      ticks: {
-        callback: (value) => value + "%"
-      }
-    },
-
-    y: {
-      grid: {
-        display: false
-      }
-    }
-  }
+    x: { beginAtZero: true, max: 12, ticks: { callback: (v) => v + "%" } },
+    y: { grid: { display: false } },
+  },
 };
 </script>
-
 <style scoped>
-.chart-wrapper2 {
-    position:relative;
-    width:100%;
-    height:320px;
-    margin: 0 auto;
+.chart-card {
+  margin-top: 20px;
+  flex: 1 1 0;
+  min-width: 350px;
+  height: 420px;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  background: #f5f5f5;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 2px 4px 8px rgba(0, 0, 0, 0.15);
+  box-sizing: border-box;
+  overflow: hidden;
 }
-
-.chart-card{
-    flex:1;
-    width:100%;
-    min-width:0;
-    height:400px;
-    background:#F5F5F5;
-    padding:20px;
-    border-radius:8px;
-    box-shadow:2px 4px 8px rgba(0,0,0,.15);
-    box-sizing:border-box;
-    overflow:hidden;
-}
-
-.chart-wrapper2{
-    position:relative;
-    width:100%;
-    height:320px;
-}
-
-.chart-wrapper2 canvas{
-    width:100% !important;
-    height:100% !important;
-}
-
-.chart-card{
-    flex:1;
-    min-width:350px;
-}
-
 .chart-card h3 {
-  margin-bottom: 20px;
+  margin: 0 0 16px 0;
+  height: 24px;
+  flex-shrink: 0;
   font-size: 16px;
   color: #333;
   font-weight: 600;
+  line-height: 24px;
+}
+.chart-wrapper {
+  position: relative;
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+}
+.chart-wrapper canvas {
+  width: 100% !important;
+  height: 100% !important;
 }
 </style>

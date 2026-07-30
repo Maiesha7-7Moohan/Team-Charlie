@@ -12,55 +12,72 @@
       <h1>South African News Intelligence</h1>
 
       <p>
-        Publication analytics across all nine provinces •
-        Aug 2025 - Jul 2026
+        Publication analytics across all nine provinces • Aug 2025 - Jul 2026
       </p>
     </div>
-
   </header>
 </template>
 
-
 <style scoped>
-
-.header{
-    width:100%;
-    background:#ffffff;
-    border-bottom:1px solid #d9d9d9;
+.header {
+  width: 100%;
+  background: #fefefd;
+  border-bottom: 1px solid #111;
 }
 
-
-.status-bar{
-    background:#e53935;
-    color:white;
-    display:flex;
-    /* border-radius: 20px; */
-
-    width: 100%;
-    margin-top: -10px; 
-    margin-left: -10px;
-    gap:18px;
-    align-items:center;
-    padding:8px 20px;
-    font-size:12px;
-    font-weight:500;
+.status-bar {
+  height: 36px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  padding: 0 16px;
+  background: #fefefd;
+  border-bottom: 1px solid #e5e2de;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #666;
+  width: 100%;
+  box-sizing: border-box;
 }
 
-
-.dashboard-header-content{
-    padding:20px;
+.status-bar span:first-child {
+  color: #111;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-weight: 700;
 }
 
-.dashboard-header-content h1{
-    font-size:34px;
-    font-weight:700;
-    margin-bottom:8px;
-    color:#222;
+.status-bar span:first-child::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  border-radius: 50%;
+  display: inline-block;
 }
 
-.dashboard-header-content p{
-    color:#777;
-    font-size:14px;
+.dashboard-header-content {
+  padding: 24px 16px 20px;
+  background: #f7f7f5;
 }
 
+.dashboard-header-content h1 {
+  font-size: 22px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+  color: #111;
+  margin: 0 0 8px;
+}
+
+.dashboard-header-content p {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  line-height: 1.5;
+  color: #666;
+  margin: 0;
+}
 </style>
