@@ -234,7 +234,7 @@ def delete_item(item_id):
 
     return jsonify({
         "error": "Article not found."
-    }), 40
+    }), 404
 
 # Our little star, the scraper.
 @app.route("/api/scrape", methods=["POST"])
