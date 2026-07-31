@@ -2,10 +2,17 @@ import os
 import json
 import requests
 
+
+
 from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify, abort
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
+from scrapers.bbc_scrapper import bbc_scraper
+from scrapers.cnn_scraper import scrape_cnn
+from scrapers.techcrunch_scraper import techcrunch_scraper
+from scrapers.coindesk_scraper import coindesk_scraper
+
 
 app = Flask(__name__)
 CORS(app)
@@ -239,15 +246,14 @@ def delete_item(item_id):
 # Our little star, the scraper.
 @app.route("/api/scrape", methods=["POST"])
 def scrape_articles():
-
-    data_file = os.path.join(app.root_path, "data", "articles.json")
-
-    # TODO:
-    # Wait for website URL from teammates.
-    # Download HTML using requests.
-    # Parse HTML using BeautifulSoup.
-    # Extract article information.
-    # Save articles to articles.json.
+    target = request.json.get("target") if request.is_json else None
+    scraper_map = {
+        "bbc": bbc_scraper,
+        "cnn": scrape_cnn,
+        "techcrunch": techcrunch_scraper,
+        "coindesk": coindesk_scraper,
+    }
+    # run one, or all if no target specified, then save results to articles.json
 
     return jsonify({
         "message": "Scraper endpoint is ready. Waiting for website details."
