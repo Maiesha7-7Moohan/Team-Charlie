@@ -1,30 +1,57 @@
- # Scrapes BBC RSS
-
 from bs4 import BeautifulSoup
 import requests
+import json
+
+ # Scrapes BBC RSS
  # feed for bbc
 url = "https://feeds.bbci.co.uk/news/rss.xml"
 
 response = requests.get(url)
 
-# This response checks if the request was successful
 if response.status_code == 200:
-    soup = BeautifulSoup(response.content, "xml")
+
+    soup = BeautifulSoup(response.content,"xml")
 
     items = soup.find_all("item")
 
-    for item in items:
-        title = item.title.text
-        description = item.description.text
-        link = item.link.text
-        pub_date = item.pubDate.text
-        link = item.link.text
+    articles = []
 
-        print(f"Title: {title}")
-        print(f"Description: {description}")
-        print(f"Link: {link}")
-        print(f"Published: {pub_date}")
-        print("-" * 50)
+    for item in items:
+        article ={
+            "title": item.title.text,
+            "description": item.description.text,
+            "link": item.link.text,
+            "published": item.pubDate.text
+        }
+
+        articles.append(article)
+
+    with open(
+        "data/raw/bbc_raw.json",
+        "w",
+        encoding="utf-8"
+    ) as file:
+
+        json.dump(
+            articles,
+            file,
+            indent=4,
+            ensure_ascii=False
+        )
+
+    print(
+        f"Successfully saved {len(articles)} articles"
+        "as raw JSON."
+    )
+
+
 else:
-    print(f"Failed to fetch RSS feed. Status code: {response.status_code}")
+
+    print(
+        f"Failed to fecth RSS feed. "
+        f"Status code: {response.status_code}"
+    )
+
+        
+
 

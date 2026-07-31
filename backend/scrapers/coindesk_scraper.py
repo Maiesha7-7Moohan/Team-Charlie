@@ -2,11 +2,20 @@ import requests
 import json
 from bs4 import BeautifulSoup
 
+
 # ============================================
 # Configuration
 # ============================================
 
-RSS_URL = "https://www.coindesk.com/arc/outboundfeeds/rss/?outputType=xml"
+RSS_URL = (
+    "https://www.coindesk.com/"
+    "arc/outboundfeeds/rss/"
+    "?outputType=xml"
+)
+
+OUTPUT_FILE = (
+    "data/raw/coindesk_raw.json"
+)
 
 HEADERS = {
     "User-Agent": (
@@ -27,28 +36,40 @@ try:
     response = requests.get(
         RSS_URL,
         headers=HEADERS,
-        timeout=10
+        timeout=20
     )
 
     response.raise_for_status()
 
 except requests.exceptions.RequestException as e:
 
-    print(f"Failed to fetch RSS feed:\n{e}")
+    print(
+        f"Failed to fetch RSS feed:\n{e}"
+    )
 
     exit()
+
 
 # ============================================
 # Parse RSS Feed
 # ============================================
 
-rss = BeautifulSoup(response.content, "xml")
+rss = BeautifulSoup(
+    response.content,
+    "xml"
+)
 
-items = rss.find_all("item")
+items = rss.find_all(
+    "item"
+)
 
-print(f"Found {len(items)} articles.\n")
+print(
+    f"Found {len(items)} articles.\n"
+)
+
 
 news_data = []
+
 
 # ============================================
 # Scrape Each Article
@@ -106,7 +127,10 @@ for item in items:
 
     if article_url:
 
-        print(f"Article: {title}")
+        print(
+            f"Article: {title}"
+        )
+
 
         try:
 
