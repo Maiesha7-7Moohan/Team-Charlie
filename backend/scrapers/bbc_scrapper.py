@@ -2,6 +2,8 @@ from bs4 import BeautifulSoup
 import requests
 import json
 
+ # Scrapes BBC RSS
+ # feed for bbc
 url = "https://feeds.bbci.co.uk/news/rss.xml"
 
 response = requests.get(url)

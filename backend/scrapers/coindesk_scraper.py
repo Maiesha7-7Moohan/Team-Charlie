@@ -25,6 +25,7 @@ HEADERS = {
     )
 }
 
+OUTPUT_FILE = "coindesk_articles.json"
 
 # ============================================
 # Download RSS Feed
@@ -77,110 +78,48 @@ news_data = []
 for item in items:
 
     title = (
-
-        item.title.get_text(
-            strip=True
-        )
-
-        if item.title
-
-        else ""
-
+        item.title.get_text(strip=True)
+        if item.title else ""
     )
-
 
     summary = (
-
-        item.description.get_text(
-            strip=True
-        )
-
-        if item.description
-
-        else ""
-
+        item.description.get_text(strip=True)
+        if item.description else ""
     )
-
 
     article_url = (
-
-        item.link.get_text(
-            strip=True
-        )
-
-        if item.link
-
-        else ""
-
+        item.link.get_text(strip=True)
+        if item.link else ""
     )
-
 
     published = (
-
-        item.pubDate.get_text(
-            strip=True
-        )
-
-        if item.pubDate
-
-        else ""
-
+        item.pubDate.get_text(strip=True)
+        if item.pubDate else ""
     )
 
-
-    author_tag = item.find(
-        "dc:creator"
-    )
-
+    author_tag = item.find("dc:creator")
 
     author = (
-
-        author_tag.get_text(
-            strip=True
-        )
-
-        if author_tag
-
-        else ""
-
+        author_tag.get_text(strip=True)
+        if author_tag else "Unknown"
     )
 
-
-    category_tag = item.find(
-        "category"
-    )
-
+    category_tag = item.find("category")
 
     category = (
-
-        category_tag.get_text(
-            strip=True
-        )
-
-        if category_tag
-
-        else "General"
-
+        category_tag.get_text(strip=True)
+        if category_tag else "General"
     )
-
 
     image = ""
 
-
-    media = item.find(
-        "media:content"
-    )
-
+    media = item.find("media:content")
 
     if media and media.get("url"):
 
-        image = media.get(
-            "url"
-        )
-
+        image = media["url"]
 
     article = ""
-
 
     # ========================================
     # Visit Article Page
@@ -196,161 +135,73 @@ for item in items:
         try:
 
             article_response = requests.get(
-
                 article_url,
-
                 headers=HEADERS,
-
-                timeout=20
-
+                timeout=10
             )
-
 
             article_response.raise_for_status()
 
-
             article_soup = BeautifulSoup(
-
                 article_response.text,
-
                 "html.parser"
-
             )
-
 
             selectors = [
 
-                (
-                    "article",
-                    {}
-                ),
+                ("article", {}),
 
-                (
-                    "main",
-                    {}
-                ),
+                ("main", {}),
 
-                (
-                    "div",
-                    {
-                        "data-testid":
-                        "article-content"
-                    }
-                ),
+                ("div", {"data-testid": "article-content"}),
 
-                (
-                    "div",
-                    {
-                        "class":
-                        "article-content"
-                    }
-                ),
+                ("div", {"class": "article-content"}),
 
-                (
-                    "div",
-                    {
-                        "class":
-                        "content-body"
-                    }
-                ),
+                ("div", {"class": "content-body"}),
 
-                (
-                    "section",
-                    {
-                        "class":
-                        "article-body"
-                    }
-                )
+                ("section", {"class": "article-body"}),
 
             ]
 
-
             article_container = None
-
 
             for tag, attrs in selectors:
 
-                article_container = (
-                    article_soup.find(
-                        tag,
-                        attrs
-                    )
-                )
-
+                article_container = article_soup.find(tag, attrs)
 
                 if article_container:
-
                     break
-
-
-            if article_container:
-
-                paragraphs = (
-
-                    article_container.find_all(
-                        "p"
-                    )
-
-                )
-
-            else:
-
-                paragraphs = (
-
-                    article_soup.find_all(
-                        "p"
-                    )
-
-                )
-
 
             seen = set()
 
-            paragraphs_text = []
+            if article_container:
 
+                paragraphs = article_container.find_all("p")
 
-            for paragraph in paragraphs:
+            else:
 
-                text = paragraph.get_text(
-                    " ",
-                    strip=True
-                )
+                paragraphs = article_soup.find_all("p")
 
+            for p in paragraphs:
+
+                text = p.get_text(" ", strip=True)
 
                 if len(text) < 40:
-
                     continue
-
 
                 if text in seen:
-
                     continue
 
+                seen.add(text)
 
-                seen.add(
-                    text
-                )
+                article += text + "\n\n"
 
-
-                paragraphs_text.append(
-                    text
-                )
-
-
-            article = "\n\n".join(
-                paragraphs_text
-            )
-
+            article = article.strip()
 
         except requests.exceptions.RequestException as e:
 
-            print(
-                f"Failed to scrape article:"
-                f"\n{article_url}"
-            )
-
+            print(f"Failed to scrape article:\n{article_url}")
             print(e)
-
 
     # ========================================
     # Store Data
@@ -378,38 +229,18 @@ for item in items:
 
     })
 
-
 # ============================================
-# Save Raw JSON
+# Save JSON
 # ============================================
 
-with open(
-
-    OUTPUT_FILE,
-
-    "w",
-
-    encoding="utf-8"
-
-) as file:
+with open(OUTPUT_FILE, "w", encoding="utf-8") as file:
 
     json.dump(
-
         news_data,
-
         file,
-
         indent=4,
-
         ensure_ascii=False
-
     )
 
+print(f"\nSaved {len(news_data)} articles to '{OUTPUT_FILE}'.")
 
-print(
-
-    f"\nSaved {len(news_data)} articles to "
-
-    f"'{OUTPUT_FILE}'."
-
-)
