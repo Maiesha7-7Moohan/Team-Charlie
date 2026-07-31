@@ -88,6 +88,16 @@
   </div>
 </template>
 
+<style scoped>
+.container {
+  padding: 20px;
+  font-family: Arial, sans-serif;
+}
+
+.article {
+  margin-bottom: 20px;
+}
+</style>
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import SearchBar from "./Components/SearchBar.vue";
