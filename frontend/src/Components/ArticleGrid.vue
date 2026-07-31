@@ -1,5 +1,22 @@
 <template>
   <div class="grid-wrapper">
+    <!-- 3D DATA NODE / KEYWORD CLUSTER -->
+    <div class="cluster-section">
+      <div class="cluster-header">
+        <span
+          >CLUSTER MAP — {{ stats.total }} NODES ({{ stats.cats }} CAT /
+          {{ stats.kw }} KW / {{ stats.sites }} SITES)</span
+        >
+        <div class="legend">
+          <span><i style="background: #ff5a1f"></i> CATEGORY</span>
+          <span><i style="background: #2d5bff"></i> KEYWORD</span>
+          <span><i style="background: #111"></i> SITE</span>
+        </div>
+      </div>
+      <div ref="canvasContainer" class="graph-canvas"></div>
+    </div>
+
+    <!-- YOUR EXISTING GRID -->
     <div v-if="loading" class="loading-state">Loading articles...</div>
     <div v-else-if="error" class="error-state">{{ error }}</div>
     <div v-else class="grid">
@@ -91,8 +108,16 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import {
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+} from "vue";
 import { getArticles } from "@/api/fakearticles";
+import * as THREE from "three";
 
 const props = defineProps({
   search: String,
@@ -106,8 +131,11 @@ const selected = ref(null);
 const articles = ref([]);
 const loading = ref(false);
 const error = ref(null);
+const canvasContainer = ref(null);
+const stats = ref({ total: 0, cats: 0, kw: 0, sites: 0 });
 
-// Group 1 palette
+let scene, camera, renderer, animationId, graphGroup;
+
 const group1Palette = [
   "#ff5a1f",
   "#2d5bff",
@@ -118,29 +146,19 @@ const group1Palette = [
   "#06b6d4",
   "#111",
 ];
-
-function isUrl(str) {
-  return typeof str === "string" && /^https?:\/\//.test(str);
+function isUrl(s) {
+  return typeof s === "string" && /^https?:\/\//.test(s);
 }
 function getArticleUrl(a) {
   if (!a) return null;
-  const candidate = a.url || a.link || a.href || null;
-  if (candidate) return candidate;
-  if (isUrl(a.id)) return a.id;
-  return null;
+  return a.url || a.link || a.href || null;
 }
 function normalizeArticle(raw, index) {
   const content = raw.content || raw.summary || "";
   const color = group1Palette[index % group1Palette.length];
-  const isDark =
-    color === "#111" ||
-    color === "#2d5bff" ||
-    color === "#7c3aed" ||
-    color === "#ef4444";
-
-  const tagPalette = group1Palette;
+  const isDark = ["#111", "#2d5bff", "#7c3aed", "#ef4444"].includes(color);
   return {
-    id: raw.id || raw.url || raw.link || index,
+    id: raw.id || raw.url || index,
     source: (raw.source || raw.source_name || "WEB").toUpperCase(),
     author: raw.author || "Scraped",
     badge: raw.badge || "WIRE",
@@ -151,34 +169,26 @@ function normalizeArticle(raw, index) {
       content.slice(0, 180) + (content.length > 180 ? "..." : ""),
     tags: Array.isArray(raw.tags)
       ? raw.tags.map((t, i) => {
-          const c = tagPalette[i % tagPalette.length];
-          const dark =
-            c === "#111" ||
-            c === "#2d5bff" ||
-            c === "#7c3aed" ||
-            c === "#ef4444";
+          const c = group1Palette[i % group1Palette.length];
+          const dark = ["#111", "#2d5bff", "#7c3aed", "#ef4444"].includes(c);
           return typeof t === "string"
             ? {
                 t: t.toUpperCase(),
-                s: `background:${c}; color:${dark ? "#fff" : "#111"}; border:1px solid #111;`,
+                s: `background:${c};color:${dark ? "#fff" : "#111"};border:1px solid #111;`,
               }
             : {
                 t: t.t,
                 s:
                   t.s ||
-                  `background:${c}; color:${dark ? "#fff" : "#111"}; border:1px solid #111;`,
+                  `background:${c};color:${dark ? "#fff" : "#111"};border:1px solid #111;`,
               };
         })
       : (raw.keywords || []).slice(0, 3).map((k, i) => {
-          const c = tagPalette[i % tagPalette.length];
-          const dark =
-            c === "#111" ||
-            c === "#2d5bff" ||
-            c === "#7c3aed" ||
-            c === "#ef4444";
+          const c = group1Palette[i % group1Palette.length];
+          const dark = ["#111", "#2d5bff", "#7c3aed", "#ef4444"].includes(c);
           return {
             t: typeof k === "string" ? k.toUpperCase() : k.t,
-            s: `background:${c}; color:${dark ? "#fff" : "#111"}; border:1px solid #111;`,
+            s: `background:${c};color:${dark ? "#fff" : "#111"};border:1px solid #111;`,
           };
         }),
     relevance: raw.relevance ?? 82,
@@ -189,18 +199,177 @@ function normalizeArticle(raw, index) {
       new Date().toISOString().slice(0, 16).replace("T", " "),
     collection: raw.collection || "SCRAPED",
     flagged: raw.flagged || false,
-    color: color,
+    color,
     category: raw.category || raw.source_name || "All Sources",
-    url:
-      raw.url ||
-      raw.link ||
-      raw.href ||
-      raw.original_url ||
-      raw.canonical_url ||
-      null,
+    url: raw.url || raw.link || null,
     link: raw.link || null,
     href: raw.href || null,
   };
+}
+
+// --- CORE TASK: Build connected nodes ---
+function buildCluster() {
+  const cats = new Map(),
+    kws = new Map(),
+    sites = new Map();
+  const links = []; // { source, target }
+
+  articles.value.forEach((a) => {
+    if (!cats.has(a.category))
+      cats.set(a.category, {
+        id: `cat_${a.category}`,
+        label: a.category,
+        type: "category",
+        count: 0,
+      });
+    cats.get(a.category).count++;
+
+    if (!sites.has(a.source))
+      sites.set(a.source, {
+        id: `site_${a.source}`,
+        label: a.source,
+        type: "site",
+        count: 0,
+      });
+    sites.get(a.source).count++;
+
+    (a.tags || []).forEach((t) => {
+      const label = (typeof t === "string" ? t : t.t).toUpperCase();
+      if (!kws.has(label))
+        kws.set(label, { id: `kw_${label}`, label, type: "keyword", count: 0 });
+      kws.get(label).count++;
+      // connect Category -> Keyword
+      links.push({ source: `cat_${a.category}`, target: `kw_${label}` });
+      // connect Keyword -> Site
+      links.push({ source: `kw_${label}`, target: `site_${a.source}` });
+    });
+  });
+
+  const topKws = [...kws.values()]
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 30);
+  const topKwIds = new Set(topKws.map((k) => k.id));
+  const filteredLinks = links.filter(
+    (l) =>
+      topKwIds.has(l.source) ||
+      topKwIds.has(l.target) ||
+      l.source.startsWith("cat_"),
+  );
+
+  const nodes = [...cats.values(), ...topKws, ...sites.values()];
+  stats.value = {
+    total: nodes.length,
+    cats: cats.size,
+    kw: topKws.length,
+    sites: sites.size,
+  };
+  return { nodes, links: filteredLinks };
+}
+
+function initThree() {
+  if (!canvasContainer.value) return;
+  const container = canvasContainer.value;
+  const W = container.clientWidth,
+    H = 460;
+  if (renderer) {
+    container.innerHTML = "";
+    cancelAnimationFrame(animationId);
+  }
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color("#fefefd");
+  scene.fog = new THREE.Fog("#fefefd", 35, 85);
+
+  camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 1000);
+  camera.position.set(0, 0, 38);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  container.appendChild(renderer.domElement);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 1));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.6);
+  dl.position.set(10, 10, 10);
+  scene.add(dl);
+
+  graphGroup = new THREE.Group();
+  scene.add(graphGroup);
+
+  const { nodes, links } = buildCluster();
+  const nodeMap = new Map();
+
+  // Create meshes
+  nodes.forEach((n, i) => {
+    const radius =
+      n.type === "category"
+        ? 1.6 + n.count * 0.1
+        : n.type === "keyword"
+          ? 0.55 + n.count * 0.12
+          : 0.4 + n.count * 0.03;
+    const geo = new THREE.SphereGeometry(radius, 18, 18);
+    const mat = new THREE.MeshStandardMaterial({
+      color:
+        n.type === "category"
+          ? 0xff5a1f
+          : n.type === "keyword"
+            ? 0x2d5bff
+            : 0x111111,
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+
+    // Force-like layout by type
+    const angle = (i / nodes.length) * Math.PI * 2 * 4;
+    const r =
+      n.type === "category"
+        ? 5
+        : n.type === "keyword"
+          ? 13 + Math.random() * 5
+          : 22 + Math.random() * 4;
+    mesh.position.set(
+      Math.cos(angle) * r + (Math.random() - 0.5) * 3,
+      Math.sin(angle) * r + (Math.random() - 0.5) * 3,
+      (Math.random() - 0.5) * 8,
+    );
+
+    mesh.userData = n;
+    graphGroup.add(mesh);
+    nodeMap.set(n.id, mesh);
+  });
+
+  // Create connecting lines
+  const lineMat = new THREE.LineBasicMaterial({
+    color: 0xd8d4cf,
+    transparent: true,
+    opacity: 0.35,
+  });
+  links.forEach((l) => {
+    const a = nodeMap.get(l.source),
+      b = nodeMap.get(l.target);
+    if (!a || !b) return;
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      a.position,
+      b.position,
+    ]);
+    const line = new THREE.Line(geo, lineMat);
+    graphGroup.add(line);
+  });
+
+  const animate = () => {
+    animationId = requestAnimationFrame(animate);
+    graphGroup.rotation.y += 0.0007;
+    graphGroup.rotation.x += 0.0002;
+    renderer.render(scene, camera);
+  };
+  animate();
+
+  window.addEventListener("resize", () => {
+    if (!canvasContainer.value) return;
+    const w = canvasContainer.value.clientWidth;
+    camera.aspect = w / H;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, H);
+  });
 }
 
 const fetchArticles = async () => {
@@ -208,23 +377,23 @@ const fetchArticles = async () => {
   error.value = null;
   try {
     const res = await getArticles();
-    // Robust handling - fixes "map is not a function"
-    let rawList = [];
-    if (Array.isArray(res)) rawList = res;
-    else if (Array.isArray(res?.data)) rawList = res.data;
-    else if (Array.isArray(res?.articles)) rawList = res.articles;
-    else if (Array.isArray(res?.items)) rawList = res.items;
-    else rawList = [];
+    let rawList = Array.isArray(res)
+      ? res
+      : res?.data || res?.articles || res?.items || [];
     articles.value = rawList.map(normalizeArticle);
+    await nextTick();
+    initThree();
   } catch (e) {
-    console.error(e);
     error.value = e.message || "Failed to fetch";
   } finally {
     loading.value = false;
   }
 };
-
 onMounted(fetchArticles);
+onBeforeUnmount(() => {
+  cancelAnimationFrame(animationId);
+  renderer?.dispose();
+});
 
 const filteredArticles = computed(() => {
   let list = articles.value.filter((a) => {
@@ -245,26 +414,17 @@ const filteredArticles = computed(() => {
   if (props.sort === "relevance")
     list.sort((a, b) => b.relevance - a.relevance);
   else if (props.sort === "words") list.sort((a, b) => b.words - a.words);
-  else
-    list.sort(
-      (a, b) =>
-        new Date(b.collected).getTime() - new Date(a.collected).getTime(),
-    );
+  else list.sort((a, b) => new Date(b.collected) - new Date(a.collected));
   return list;
 });
-
 function openArticle(a) {
   selected.value = a;
 }
 function openFullArticle() {
   const url = getArticleUrl(selected.value);
-  if (!url) {
-    console.warn("No URL found for article:", selected.value);
-    return;
-  }
-  window.open(url, "_blank", "noopener,noreferrer");
+  if (url) window.open(url, "_blank", "noopener,noreferrer");
 }
-watch(filteredArticles, (list) => emit("update:count", list.length), {
+watch(filteredArticles, (l) => emit("update:count", l.length), {
   immediate: true,
 });
 defineExpose({ fetchArticles, loading, error });
@@ -276,6 +436,40 @@ defineExpose({ fetchArticles, loading, error });
   background: #f7f7f5;
   padding: 16px;
 }
+.cluster-section {
+  background: #fefefd;
+  border: 1.5px solid #111;
+  margin-bottom: 16px;
+}
+.cluster-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 14px;
+  border-bottom: 1.5px solid #111;
+  flex-wrap: wrap;
+  gap: 8px;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  font-weight: 700;
+}
+.legend {
+  display: flex;
+  gap: 12px;
+  font-size: 8px;
+  font-weight: 400;
+}
+.legend i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 4px;
+}
+.graph-canvas {
+  width: 100%;
+  height: 460px;
+}
+
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -284,7 +478,6 @@ defineExpose({ fetchArticles, loading, error });
 }
 .card {
   background: #fefefd;
-
   padding: 16px 16px 12px;
   display: flex;
   flex-direction: column;
@@ -293,6 +486,7 @@ defineExpose({ fetchArticles, loading, error });
   overflow: hidden;
   cursor: pointer;
   transition: all 0.18s ease;
+  border: 1px solid #e5e2de;
 }
 .card:hover {
   transform: translateY(-2px);
@@ -403,9 +597,6 @@ defineExpose({ fetchArticles, loading, error });
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
-.tag:hover {
-  transform: translateY(-1px);
-}
 .card-foot {
   margin-top: auto;
   flex-shrink: 0;
@@ -460,25 +651,10 @@ defineExpose({ fetchArticles, loading, error });
   width: 6px;
   height: 6px;
 }
-.add-card {
-  background: #e8e3de;
-  border: 1px dashed #d1c7bc;
-  min-height: 260px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 9px;
-  color: #aaa;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  cursor: pointer;
-}
 .modal {
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.6);
-
   display: flex;
   z-index: 200;
   align-items: center;

@@ -98,6 +98,7 @@ import Charts from "./Components/Charts.vue";
 import EngagementChart from "./Components/EngagementChart.vue";
 import Insights from "./Components/Insights.vue";
 import ProvinceTable from "./Components/ProvinceTable.vue";
+import FilterBar from "./Components/FilterBar.vue";
 
 const showFilters = ref(false);
 const searchQuery = ref("");
