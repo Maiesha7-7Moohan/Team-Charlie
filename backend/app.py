@@ -8,7 +8,7 @@ from bs4 import BeautifulSoup
 from flask import Flask, request, jsonify, abort
 from werkzeug.utils import secure_filename
 from flask_cors import CORS
-from scrapers.bbc_scrapper import bbc_scraper
+from scrapers.bbc_scraper import bbc_scraper
 from scrapers.cnn_scraper import scrape_cnn
 from scrapers.techcrunch_scraper import techcrunch_scraper
 from scrapers.coindesk_scraper import coindesk_scraper
