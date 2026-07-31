@@ -16,7 +16,6 @@
       <div ref="canvasContainer" class="graph-canvas"></div>
     </div>
 
-    <!-- YOUR EXISTING GRID -->
     <div v-if="loading" class="loading-state">Loading articles...</div>
     <div v-else-if="error" class="error-state">{{ error }}</div>
     <div v-else class="grid">
@@ -116,7 +115,11 @@ import {
   onBeforeUnmount,
   nextTick,
 } from "vue";
-import { getArticles } from "@/api/fakearticles";
+api.getArticles = async () => {
+  const res = await fetch("../../../backend/app.py");
+  if (!res.ok) throw new Error("Failed to fetch articles");
+  return res.json();
+};
 import * as THREE from "three";
 
 const props = defineProps({
@@ -193,10 +196,7 @@ function normalizeArticle(raw, index) {
         }),
     relevance: raw.relevance ?? 82,
     words: raw.words || (content ? content.split(/\s+/).length : 0),
-    collected:
-      raw.collected ||
-      raw.scraped_at ||
-      new Date().toISOString().slice(0, 16).replace("T", " "),
+    collected: raw.date || raw.collected || raw.scraped_at || "",
     collection: raw.collection || "SCRAPED",
     flagged: raw.flagged || false,
     color,
