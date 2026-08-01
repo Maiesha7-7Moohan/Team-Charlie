@@ -14,21 +14,23 @@ def get_items():
     data_file = os.path.join(
         current_app.root_path,
         "data",
-        "articles.json"
-        )
+        "cleaned",
+        "articles_cleaned.json"
+    )
 
     with open(data_file, "r", encoding="utf-8") as file:
         articles = json.load(file)
 
     return jsonify(articles), 200
 
-@items_bp.route("", methods=["GET"])
+@items_bp.route("/<int:item_id>", methods=["GET"])
 def get_item(item_id):  
 
     data_file = os.path.join(
         current_app.root_path,
         "data",
-        "articles.json"
+        "cleaned",
+        "articles_cleaned.json"
     )
 
     with open(data_file, "r", encoding="utf-8") as file:
@@ -44,7 +46,12 @@ def get_item(item_id):
 @items_bp.route("", methods=["POST"])
 def create_item():
 
-    data_file = os.path.join(current_app.root_path, "data", "articles.json")
+    data_file = os.path.join(
+        current_app.root_path,
+        "data",
+        "cleaned",
+        "articles_cleaned.json"
+    )
     payload = request.get_json(silent=True)
 
     if payload is None:
@@ -89,10 +96,63 @@ def create_item():
 
     return jsonify(new_article), 201
 
-@items_bp.route("", methods=["DELETE"])
+@items_bp.route("/<int:item_id>", methods=["PUT"])
+def update_item(item_id):
+
+    data_file = os.path.join(
+        current_app.root_path,
+        "data",
+        "cleaned",
+        "articles_cleaned.json"
+    )
+
+    payload = request.get_json(silent=True)
+
+    if payload is None:
+        return jsonify({
+            "error": "Request body must be valid JSON."
+        }), 400
+
+    required_fields = ["title", "author", "source", "date", "summary"]
+    missing_fields = [field for field in required_fields if not payload.get(field)]
+
+    if missing_fields:
+        return jsonify({
+            "error": "Missing required fields.",
+            "missing_fields": missing_fields
+        }), 400
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        articles = json.load(file)
+
+    for article in articles:
+        if article["id"] == item_id:
+
+            article["title"] = payload["title"]
+            article["author"] = payload["author"]
+            article["source"] = payload["source"]
+            article["date"] = payload["date"]
+            article["summary"] = payload["summary"]
+
+            with open(data_file, "w", encoding="utf-8") as file:
+                json.dump(articles, file, indent=2, ensure_ascii=False)
+                file.write("\n")
+
+            return jsonify(article), 200
+
+    return jsonify({
+        "error": "Article not found."
+    }), 404
+
+@items_bp.route("/<int:item_id>", methods=["DELETE"])
 def delete_item(item_id):
 
-    data_file = os.path.join(current_app.root_path, "data", "articles.json")
+    data_file = os.path.join(
+        current_app.root_path,
+        "data",
+        "cleaned",
+        "articles_cleaned.json"
+    )
 
     with open(data_file, "r", encoding="utf-8") as file:
         articles = json.load(file)

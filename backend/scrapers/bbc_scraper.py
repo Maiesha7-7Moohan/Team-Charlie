@@ -1,56 +1,47 @@
-from bs4 import BeautifulSoup
-import requests
 import json
+from pathlib import Path
 
- # Scrapes BBC RSS
- # feed for bbc
-url = "https://feeds.bbci.co.uk/news/rss.xml"
+import requests
+from bs4 import BeautifulSoup
 
-response = requests.get(url)
 
-if response.status_code == 200:
+# Scrapes BBC RSS feed
+def bbc_scraper():
+    url = "https://feeds.bbci.co.uk/news/rss.xml"
+    response = requests.get(url, timeout=10)
 
-    soup = BeautifulSoup(response.content,"xml")
+    if response.status_code == 200:
+        soup = BeautifulSoup(response.content, "xml")
+        items = soup.find_all("item")
+        articles = []
 
-    items = soup.find_all("item")
+        for item in items:
+            article = {
+                "title": item.title.text if item.title else "",
+                "description": item.description.text if item.description else "",
+                "link": item.link.text if item.link else "",
+                "published": item.pubDate.text if item.pubDate else ""
+            }
+            articles.append(article)
 
-    articles = []
+        raw_dir = Path(__file__).resolve().parents[1] / "data" / "raw"
+        raw_dir.mkdir(parents=True, exist_ok=True)
+        raw_file = raw_dir / "bbc_raw.json"
 
-    for item in items:
-        article ={
-            "title": item.title.text,
-            "description": item.description.text,
-            "link": item.link.text,
-            "published": item.pubDate.text
+        with raw_file.open("w", encoding="utf-8") as file:
+            json.dump(articles, file, indent=4, ensure_ascii=False)
+
+        return {
+            "success": True,
+            "message": f"Successfully saved {len(articles)} articles as raw JSON.",
+            "path": str(raw_file)
         }
 
-        articles.append(article)
-
-    with open(
-        "data/raw/bbc_raw.json",
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            articles,
-            file,
-            indent=4,
-            ensure_ascii=False
-        )
-
-    print(
-        f"Successfully saved {len(articles)} articles"
-        "as raw JSON."
-    )
-
-
-else:
-
-    print(
-        f"Failed to fecth RSS feed. "
-        f"Status code: {response.status_code}"
-    )
+    return {
+        "success": False,
+        "message": f"Failed to fetch RSS feed. Status code: {response.status_code}"
+    }
+    
 
         
 

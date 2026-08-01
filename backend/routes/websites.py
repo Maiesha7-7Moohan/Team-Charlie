@@ -11,7 +11,10 @@ websites_bp = Blueprint("websites", __name__, url_prefix="/api/websites")
 @websites_bp.route("", methods=["GET"])
 def get_websites():
     
-    data_file = os.path.join(current_app.root_path, "data", "websites.json"
+    data_file = os.path.join(
+        current_app.root_path,
+        "data",
+        "websites.json"
     )
 
     with open(data_file, "r", encoding="utf-8") as file:

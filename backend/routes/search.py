@@ -18,7 +18,12 @@ def search_articles():
         "error": "Please provide a search term."
     }), 400
 
-    data_file = os.path.join(current_app.root_path, "data", "articles.json")
+    data_file = os.path.join(
+        current_app.root_path,
+        "data",
+        "cleaned",
+        "articles_cleaned.json"
+        )
 
     with open(data_file, "r", encoding="utf-8") as file:
         articles = json.load(file)
