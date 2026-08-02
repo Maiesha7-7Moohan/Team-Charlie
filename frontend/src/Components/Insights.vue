@@ -7,38 +7,87 @@
   </div>
 </template>
 <script setup>
-import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
+import { ref, onMounted } from "vue";
 import { Pie } from "vue-chartjs";
-ChartJS.register(ArcElement, Tooltip, Legend);
-const chartData = {
-  labels: [
-    "Gauteng",
-    "Western Cape",
-    "KwaZulu-Natal",
-    "Eastern Cape",
-    "Limpopo",
-    "Mpumalanga",
-  ],
+
+import {
+  Chart as ChartJS,
+  ArcElement,
+  Tooltip,
+  Legend
+} from "chart.js";
+
+ChartJS.register(
+  ArcElement,
+  Tooltip,
+  Legend
+);
+
+const chartData = ref({
+  labels: [],
   datasets: [
     {
-      data: [52, 39, 28, 24, 22, 20],
+      data: [],
       backgroundColor: [
-        "#ff5a1f",
-        "#2d5bff",
+        "#ff5a5f",
+        "#2d9bff",
         "#22c55e",
-        "#7c3aed",
-        "#facc15",
-        "#111111",
-      ],
-      borderWidth: 1,
-    },
-  ],
-};
+        "#f59e0b",
+        "#8b5cf6",
+        "#06b6d4"
+      ]
+    }
+  ]
+});
+
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  plugins: { legend: { position: "bottom" } },
+
+  plugins: {
+    legend: {
+      position: "bottom"
+    }
+  }
 };
+
+onMounted(async () => {
+
+  const response = await fetch("http://localhost:5000/api/articles");
+
+  const articles = await response.json();
+
+  const sourceCount = {};
+
+  articles.forEach(article => {
+
+    const source = article.source || "Unknown";
+
+    sourceCount[source] = (sourceCount[source] || 0) + 1;
+
+  });
+
+  chartData.value = {
+
+    labels: Object.keys(sourceCount),
+
+    datasets: [
+      {
+        data: Object.values(sourceCount),
+
+        backgroundColor: [
+          "#ff5a5f",
+          "#2d9bff",
+          "#22c55e",
+          "#f59e0b",
+          "#8b5cf6",
+          "#06b6d4"
+        ]
+      }
+    ]
+  };
+
+});
 </script>
 <style scoped>
 .pie-chart-card {
