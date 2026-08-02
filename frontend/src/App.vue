@@ -5,16 +5,11 @@
       <Header />
 
       <main class="dashboard">
-        <!-- Statistics Cards -->
         <Cards />
-
-        <!-- Charts -->
         <section class="charts-row">
           <Charts />
           <EngagementChart />
         </section>
-
-        <!-- Bottom Section -->
         <section class="bottom-row">
           <Insights />
           <ProvinceTable />
@@ -33,6 +28,7 @@
         :sort="sortBy"
         :show-filters="showFilters"
         :has-active-filters="hasActiveFilters"
+        :sources-count="uniqueSources"
         @update:search="searchQuery = $event"
         @update:sort="sortBy = $event"
         @toggle-filters="showFilters = !showFilters"
@@ -41,9 +37,10 @@
       />
 
       <div class="main-layout">
+        <!-- FIX: renamed class to avoid collision with FilterBar's own .filter-overlay -->
         <div
           v-if="showFilters"
-          class="filter-overlay"
+          class="collection-filter-wrapper"
           @click.self="showFilters = false"
         >
           <FilterBar
@@ -67,6 +64,8 @@
           :search="searchQuery"
           :sort="sortBy"
           :category="selectedCategory"
+          :status="selectedStatus"
+          :priority="selectedPriority"
           :flagged-only="flaggedOnly"
           @update:count="handleCountUpdate"
           @search-tag="searchQuery = $event"
@@ -75,12 +74,8 @@
 
       <div class="footer">
         <div class="footer-left">
-          <span class="live"
-            ><span class="dot"></span>LIVE COLLECTION ACTIVE</span
-          ><span
-            >{{ filteredCount }} articles • {{ uniqueSources }} sources •
-            {{ flaggedCount }} flagged</span
-          >
+          <span class="live"><span class="dot"></span>LIVE COLLECTION ACTIVE</span>
+          <span>{{ filteredCount }} articles • {{ uniqueSources }} sources • {{ flaggedCount }} flagged</span>
         </div>
         <div>Miscellaneous v0.4.1 © 2026</div>
       </div>
@@ -88,16 +83,6 @@
   </div>
 </template>
 
-<style scoped>
-.container {
-  padding: 20px;
-  font-family: Arial, sans-serif;
-}
-
-.article {
-  margin-bottom: 20px;
-}
-</style>
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import SearchBar from "./Components/SearchBar.vue";
@@ -128,7 +113,9 @@ const hasActiveFilters = computed(
   () =>
     selectedCategory.value !== "All Sources" ||
     selectedStatus.value.length > 0 ||
-    flaggedOnly.value,
+    selectedPriority.value.length > 0 ||
+    flaggedOnly.value ||
+    searchQuery.value.trim().length > 0
 );
 
 function handleCountUpdate(payload: any) {
@@ -138,8 +125,7 @@ function handleCountUpdate(payload: any) {
     filteredCount.value = payload.count ?? filteredCount.value;
     flaggedCount.value = payload.flagged ?? flaggedCount.value;
     uniqueSources.value = payload.sources ?? uniqueSources.value;
-    if (payload.totalFlagged !== undefined)
-      flaggedTotal.value = payload.totalFlagged;
+    if (payload.totalFlagged !== undefined) flaggedTotal.value = payload.totalFlagged;
   }
 }
 
@@ -154,46 +140,13 @@ function clearAll() {
 </script>
 
 <style scoped>
-.page-root {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.dashboard-section {
-  background: #ffffff;
-  width: 100%;
-}
-.dashboard {
-  padding: 0;
-  background: #fff;
-}
-.dashboard-grid {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 20px;
-  align-items: stretch;
-}
-.charts-row {
-  display: flex;
-  gap: 20px;
-  padding: 0 20px;
-  flex-wrap: wrap;
-}
-.charts-row > * {
-  flex: 1;
-}
-.bottom-row {
-  display: flex;
-  gap: 20px;
-  padding: 0 20px 20px 20px;
-  flex-wrap: wrap;
-}
-.bottom-row > * {
-  flex: 1;
-}
-
-/* --- Collection Section --- Keeps original look --- */
+.page-root { min-height: 100vh; display: flex; flex-direction: column; }
+.dashboard-section { background: #ffffff; width: 100%; }
+.dashboard { padding: 0; background: #fff; }
+.charts-row { display: flex; gap: 20px; padding: 0 20px; flex-wrap: wrap; }
+.charts-row > * { flex: 1; }
+.bottom-row { display: flex; gap: 20px; padding: 0 20px 20px 20px; flex-wrap: wrap; }
+.bottom-row > * { flex: 1; }
 .app-root {
   background: #f7f7f5;
   min-height: 100vh;
@@ -208,23 +161,11 @@ function clearAll() {
   align-items: stretch;
   position: relative;
 }
-.filter-overlay {
+.collection-filter-wrapper {
   position: fixed;
   inset: 0;
   top: 84px;
   z-index: 100;
-  pointer-events: none;
-}
-.filter-overlay::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.2);
-  backdrop-filter: blur(3px);
-  pointer-events: auto;
-}
-.filter-overlay :deep(.filter-bar) {
-  pointer-events: auto;
 }
 .footer {
   height: 28px;
@@ -239,21 +180,7 @@ function clearAll() {
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.footer-left {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.live {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: #aaa;
-}
-.live .dot {
-  width: 6px;
-  height: 6px;
-  background: #22c55e;
-  border-radius: 50%;
-}
+.footer-left { display: flex; gap: 12px; align-items: center; }
+.live { display: flex; align-items: center; gap: 6px; color: #aaa; }
+.live .dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; }
 </style>
