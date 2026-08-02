@@ -2,26 +2,74 @@
   <div class="dashboard-card-container">
     <div class="dashboard-card1">
       <p>Total Articles</p>
-      <h2>146.2k</h2>
-      <p>+4.1% all provinces</p>
+      <h2>{{ totalArticles }}</h2>
+      <p>Articles collected</p>
     </div>
+
     <div class="dashboard-card2">
-      <p>Total Pageviews</p>
-      <h2>45.6M</h2>
-      <p>+5.9% trailing 12 months</p>
+      <p>News Sources</p>
+      <h2>{{ totalSources }}</h2>
+      <p>Active publishers</p>
     </div>
+
     <div class="dashboard-card3">
-      <p>Active Outlets</p>
-      <h2>71</h2>
-      <p>+3.4% tracked nationally</p>
+      <p>Categories</p>
+      <h2>{{ totalCategories }}</h2>
+      <p>Content categories</p>
     </div>
+
     <div class="dashboard-card4">
-      <p>Avg Engagement</p>
-      <h2>6.2%</h2>
-      <p>-0.3% shares + comments</p>
+      <p>Latest Publication</p>
+      <h2>{{ latestDate }}</h2>
+      <p>Most recent article</p>
     </div>
   </div>
 </template>
+
+
+<script setup>
+import { ref, onMounted } from "vue";
+
+const totalArticles = ref(0);
+const totalSources = ref(0);
+const totalCategories = ref(0);
+const latestDate = ref("-");
+
+onMounted(async () => {
+  try {
+    const response = await fetch("http://127.0.0.1:5000/api/items");
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch articles");
+    }
+
+    const articles = await response.json();
+
+    totalArticles.value = articles.length;
+
+
+    totalSources.value = new Set(
+      articles.map(article => article.source)
+    ).size;
+
+
+    totalCategories.value = new Set(
+      articles.map(article => article.category)
+    ).size;
+
+    const validDates = articles
+      .filter(article => article.published)
+      .map(article => article.published);
+
+    if (validDates.length > 0) {
+      validDates.sort((a, b) => new Date(b) - new Date(a));
+      latestDate.value = validDates[0].split(" ")[0];
+    }
+  } catch (err) {
+    console.error("Error loading dashboard cards:", err);
+  }
+});
+</script>
 
 <style scoped>
 .dashboard-card-container {

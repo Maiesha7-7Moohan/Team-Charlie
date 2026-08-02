@@ -1,12 +1,13 @@
 <template>
   <div class="chart-card">
-    <h3>Reader Engagement Rate %</h3>
+    <h3>Top Authors</h3>
     <div class="chart-wrapper">
       <Bar :data="chartData" :options="chartOptions" />
     </div>
   </div>
 </template>
 <script setup>
+import { ref, onMounted } from "vue";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -15,13 +16,22 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
-ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend);
 import { Bar } from "vue-chartjs";
-const chartData = {
-  labels: ["FS", "NC", "NW", "MP", "LP", "EC", "KZN", "WC", "GP"],
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Tooltip,
+  Legend
+);
+
+const chartData = ref({
+  labels: [],
   datasets: [
     {
-      data: [11, 10, 8, 6.5, 6, 5.2, 4.2, 3.4, 2.6],
+      label: "Articles",
+      data: [],
       backgroundColor: [
         "#7c3aed",
         "#2d5bff",
@@ -36,17 +46,80 @@ const chartData = {
       borderRadius: 4,
     },
   ],
-};
+});
+
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
   indexAxis: "y",
-  plugins: { legend: { display: false } },
+  plugins: {
+    legend: {
+      display: false,
+    },
+  },
   scales: {
-    x: { beginAtZero: true, max: 12, ticks: { callback: (v) => v + "%" } },
-    y: { grid: { display: false } },
+    x: {
+      beginAtZero: true,
+      ticks: {
+        precision: 0,
+      },
+    },
+    y: {
+      grid: {
+        display: false,
+      },
+    },
   },
 };
+
+onMounted(async () => {
+  try {
+    const response = await fetch("http://127.0.0.1:5000/api/items");
+
+    if (!response.ok) {
+      throw new Error("Failed to fetch data");
+    }
+
+    const articles = await response.json();
+
+    const authorCounts = {};
+
+    articles.forEach((article) => {
+      const author = article.author || "Unknown";
+      authorCounts[author] = (authorCounts[author] || 0) + 1;
+    });
+
+    // Keep only the top 10 authors
+    const sortedAuthors = Object.entries(authorCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 10);
+
+    chartData.value = {
+      labels: sortedAuthors.map((item) => item[0]),
+      datasets: [
+        {
+          label: "Articles",
+          data: sortedAuthors.map((item) => item[1]),
+          backgroundColor: [
+            "#7c3aed",
+            "#2d5bff",
+            "#06b6d4",
+            "#22c55e",
+            "#facc15",
+            "#f97316",
+            "#ff5a1f",
+            "#ef4444",
+            "#111",
+            "#6b7280",
+          ],
+          borderRadius: 4,
+        },
+      ],
+    };
+  } catch (error) {
+    console.error("Error loading authors:", error);
+  }
+});
 </script>
 <style scoped>
 .chart-card {

@@ -1,6 +1,6 @@
 <template>
   <div class="chart-card">
-    <h3>Articles Published by Province</h3>
+    <h3>Top 5 Categories</h3>
     <div class="chart-wrapper">
       <Bar :data="chartData" :options="chartOptions" />
     </div>
@@ -8,6 +8,7 @@
 </template>
 
 <script setup>
+import { ref, onMounted } from "vue";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -18,48 +19,99 @@ import {
   Title,
 } from "chart.js";
 import { Bar } from "vue-chartjs";
+
 ChartJS.register(
   CategoryScale,
   LinearScale,
   BarElement,
   Tooltip,
   Legend,
-  Title,
+  Title
 );
-const chartData = {
-  labels: ["GP", "WC", "KZN", "EC", "LP", "MP", "NW", "FS", "NC"],
+
+const chartData = ref({
+  labels: [],
   datasets: [
     {
       label: "Articles",
-      data: [52, 39, 28, 24, 22, 20, 17, 12, 6],
+      data: [],
       backgroundColor: [
         "#ff5a1f",
         "#2d5bff",
         "#22c55e",
         "#7c3aed",
         "#facc15",
-        "#ef4444",
-        "#06b6d4",
-        "#111",
-        "#f97316",
       ],
       borderRadius: 4,
-      barThickness: 24,
+      barThickness: 20
     },
   ],
-};
+});
+
 const chartOptions = {
   responsive: true,
   maintainAspectRatio: false,
-  layout: { padding: { bottom: 15 } },
-  plugins: { legend: { display: false } },
+  plugins: {
+    legend: {
+      display: false,
+    },
+  },
   scales: {
-    x: { grid: { display: false }, ticks: { padding: 10 } },
-    y: { beginAtZero: true, max: 60, ticks: { stepSize: 10 } },
+    x: {
+      grid: {
+        display: false,
+      },
+    },
+    y: {
+      beginAtZero: true,
+      ticks: {
+        precision: 0,
+      },
+    },
   },
 };
-</script>
 
+onMounted(async () => {
+  try {
+    const response = await fetch("http://127.0.0.1:5000/api/items");
+
+    if (!response.ok) throw new Error("Failed to fetch data");
+
+    const articles = await response.json();
+
+    const categoryCounts = {};
+
+    articles.forEach((article) => {
+      const category = article.category || "Uncategorized";
+      categoryCounts[category] = (categoryCounts[category] || 0) + 1;
+    });
+
+    const topCategories = Object.entries(categoryCounts)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5);
+
+    chartData.value = {
+      labels: topCategories.map((item) => item[0]),
+      datasets: [
+        {
+          label: "Articles",
+          data: topCategories.map((item) => item[1]),
+          backgroundColor: [
+            "#ff5a1f",
+            "#2d5bff",
+            "#22c55e",
+            "#7c3aed",
+            "#facc15",
+          ],
+          borderRadius: 4,
+        },
+      ],
+    };
+  } catch (error) {
+    console.error(error);
+  }
+});
+</script>
 <style scoped>
 .chart-card {
   margin-top: 20px;

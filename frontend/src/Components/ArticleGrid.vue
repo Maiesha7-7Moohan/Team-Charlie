@@ -115,11 +115,15 @@ import {
   onBeforeUnmount,
   nextTick,
 } from "vue";
-api.getArticles = async () => {
-  const res = await fetch("../../../backend/app.py");
-  if (!res.ok) throw new Error("Failed to fetch articles");
-  return res.json();
-};
+async function getArticles() {
+  const response = await fetch("http://127.0.0.1:5000/api/items");
+
+  if (!response.ok) {
+    throw new Error("Failed to fetch articles");
+  }
+
+  return await response.json();
+}
 import * as THREE from "three";
 
 const props = defineProps({

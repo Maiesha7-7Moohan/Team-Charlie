@@ -1,6 +1,6 @@
 <template>
   <div class="pie-chart-card">
-    <h3>Articles by Province</h3>
+    <h3>Articles by Source</h3>
     <div class="pie-wrapper">
       <Pie :data="chartData" :options="chartOptions" />
     </div>
@@ -53,8 +53,7 @@ const chartOptions = {
 
 onMounted(async () => {
 
-  const response = await fetch("http://localhost:5000/api/articles");
-
+  const response = await fetch("http://127.0.0.1:5000/api/items");
   const articles = await response.json();
 
   const sourceCount = {};

@@ -1,105 +1,88 @@
 <template>
   <div class="table-card">
-    <h3>Province Performance</h3>
+    <h3>Articles Published Per Day</h3>
 
     <table>
       <thead>
         <tr>
-          <th>Province</th>
+          <th>Date</th>
           <th>Articles</th>
-          <th>Views</th>
-          <th>Outlets</th>
-          <th>Growth</th>
+          <th>Sources</th>
+          <th>Top Category</th>
+          <th>Top Source</th>
         </tr>
       </thead>
 
       <tbody>
-        <tr v-for="province in provinces" :key="province.name">
-          <td>{{ province.name }}</td>
-          <td>{{ province.articles }}</td>
-          <td>{{ province.views }}</td>
-          <td>{{ province.outlets }}</td>
-          <td class="growth">{{ province.growth }}</td>
+        <tr v-for="day in dailyStats" :key="day.date">
+          <td>{{ day.date }}</td>
+          <td>{{ day.articles }}</td>
+          <td>{{ day.sources }}</td>
+          <td>{{ day.category }}</td>
+          <td>{{ day.topSource }}</td>
         </tr>
       </tbody>
     </table>
   </div>
 </template>
 
+
 <script setup>
-const provinces = [
-  {
-    name: "Gauteng",
-    articles: "52.1K",
-    views: "18.6M",
-    outlets: 18,
-    growth: "+11%",
-  },
+import { ref, onMounted } from "vue";
 
-  {
-    name: "Western Cape",
-    articles: "39.0K",
-    views: "12.8M",
-    outlets: 14,
-    growth: "+9%",
-  },
+const dailyStats = ref([]);
 
-  {
-    name: "KwaZulu-Natal",
-    articles: "28.4K",
-    views: "8.9M",
-    outlets: 10,
-    growth: "+8%",
-  },
+onMounted(async () => {
+  try {
+    const response = await fetch("http://127.0.0.1:5000/api/items");
 
-  {
-    name: "Eastern Cape",
-    articles: "24.1K",
-    views: "6.3M",
-    outlets: 8,
-    growth: "+6%",
-  },
+    if (!response.ok) {
+      throw new Error("Failed to fetch data");
+    }
 
-  {
-    name: "Limpopo",
-    articles: "22.0K",
-    views: "5.5M",
-    outlets: 7,
-    growth: "+5%",
-  },
+    const articles = await response.json();
 
-  {
-    name: "Mpumalanga",
-    articles: "7,210",
-    views: "1.8M",
-    outlets: 4,
-    growth: "+2.4%",
-  },
+    const stats = {};
 
-  {
-    name: "North West",
-    articles: "6,430",
-    views: "1.6M",
-    outlets: 4,
-    growth: "+1.2%",
-  },
+    articles.forEach((article) => {
+      if (!article.published) return;
 
-  {
-    name: "Free State",
-    articles: "5,870",
-    views: "1.4M",
-    outlets: 3,
-    growth: "+0.6%",
-  },
+      const date = article.published.split(" ")[0];
 
-  {
-    name: "Northern Cape",
-    articles: "3,180",
-    views: "740.0K",
-    outlets: 2,
-    growth: "+5.3%",
-  },
-];
+      if (!stats[date]) {
+        stats[date] = {
+          date: date,
+          articles: 0,
+          sources: new Set(),
+          category: article.category || "Unknown",
+          sourceCount: {},
+        };
+      }
+
+      stats[date].articles++;
+      stats[date].sources.add(article.source || "Unknown");
+
+      const source = article.source || "Unknown";
+      stats[date].sourceCount[source] =
+        (stats[date].sourceCount[source] || 0) + 1;
+    });
+
+    dailyStats.value = Object.values(stats)
+      .map((day) => ({
+        date: day.date,
+        articles: day.articles,
+        sources: day.sources.size,
+        category: day.category,
+        topSource: Object.keys(day.sourceCount).reduce((a, b) =>
+          day.sourceCount[a] > day.sourceCount[b] ? a : b
+        ),
+      }))
+      .sort((a, b) => new Date(b.date) - new Date(a.date))
+      .slice(0, 7); // Show only 7 rows
+  } catch (err) {
+    console.error("Error loading data:", err);
+  }
+});
 </script>
 
 <style scoped>
