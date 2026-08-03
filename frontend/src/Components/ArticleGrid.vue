@@ -2,12 +2,24 @@
   <div class="grid-wrapper">
     <div class="cluster-section">
       <div class="cluster-header">
-        <span>CLUSTER MAP — {{ stats.total }} NODES ({{ stats.cats }} CAT / {{ stats.kw }} KW / {{ stats.sites }}
-          SITES)</span>
+        <span
+          >CLUSTER MAP — {{ stats.total }} NODES ({{ stats.sites }} SITES /
+          {{ stats.kw }} KEYWORDS)</span
+        >
         <div class="legend">
-          <span><i style="background: #ff5a1f"></i> CATEGORY</span>
+          <span><i style="background: #ff5a1f"></i> SITE</span>
           <span><i style="background: #2d5bff"></i> KEYWORD</span>
-          <span><i style="background: #111"></i> SITE</span>
+          <div v-if="activeFilters.length" class="active-filters">
+            <span
+              v-for="(f, i) in activeFilters"
+              :key="i"
+              class="filter-chip"
+              @click="removeFilter(i)"
+            >
+              {{ f.label }} ✕
+            </span>
+            <button class="btn-reset" @click="resetDrillDown">RESET</button>
+          </div>
         </div>
       </div>
       <div ref="canvasContainer" class="graph-canvas"></div>
@@ -16,35 +28,54 @@
     <div v-if="loading" class="loading-state">Loading articles...</div>
     <div v-else-if="error" class="error-state">{{ error }}</div>
     <div v-else class="grid">
-      <div v-for="a in filteredArticles" :key="a.id" class="card" @click="openArticle(a)">
+      <div
+        v-for="a in filteredArticles"
+        :key="a.id"
+        class="card"
+        @click="openArticle(a)"
+      >
         <div v-if="a.flagged" class="flag-line"></div>
         <div class="card-top">
           <div class="card-source">
-            <span class="src">{{ a.source }}</span><span class="author">| {{ a.author }}</span><span v-if="a.flagged"
-              class="flag-badge">FLAGGED</span>
+            <span class="src">{{ a.source }}</span
+            ><span class="author">| {{ a.author }}</span
+            ><span v-if="a.flagged" class="flag-badge">FLAGGED</span>
           </div>
           <div class="card-badges">
-            <span class="badge" :style="a.badgeStyle">{{ a.badge }}</span><span class="open-btn">↗</span>
+            <span class="badge" :style="a.badgeStyle">{{ a.badge }}</span
+            ><span class="open-btn">↗</span>
           </div>
         </div>
         <div class="card-title">{{ a.title }}</div>
         <div class="card-summary">{{ a.summary }}</div>
         <div class="card-tags">
-          <span v-for="tag in a.tags" :key="tag.t" class="tag" :style="tag.s" @click.stop="emit('search-tag', tag.t)">{{
-            tag.t }}</span>
+          <span
+            v-for="tag in a.tags"
+            :key="tag.t"
+            class="tag"
+            :style="tag.s"
+            @click.stop="emit('search-tag', tag.t)"
+            >{{ tag.t }}</span
+          >
         </div>
         <div class="card-foot">
-          <div class="foot-labels"><span>RELEVANCE</span><span>WORDS</span><span class="ml-auto">COLLECTED</span></div>
+          <div class="foot-labels">
+            <span>RELEVANCE</span><span>WORDS</span
+            ><span class="ml-auto">COLLECTED</span>
+          </div>
           <div class="foot-values">
             <div class="relevance">
               <div class="bar">
                 <div :style="{ width: a.relevance + '%' }"></div>
-              </div><span>{{ a.relevance }}</span>
+              </div>
+              <span>{{ a.relevance }}</span>
             </div>
-            <span>{{ (a.words || 0).toLocaleString() }}</span><span class="collected">{{ a.collected }}</span>
+            <span>{{ (a.words || 0).toLocaleString() }}</span
+            ><span class="collected">{{ a.collected }}</span>
           </div>
           <div class="collection-label" :style="{ color: a.color }">
-            <div class="sq" :style="{ background: a.color }"></div>{{ a.collection }}
+            <div class="sq" :style="{ background: a.color }"></div>
+            {{ a.collection }}
           </div>
         </div>
       </div>
@@ -53,18 +84,31 @@
     <div v-if="selected" class="modal" @click.self="selected = null">
       <div class="modal-content">
         <div class="modal-head">
-          <div class="card-source"><span class="src">{{ selected.source }}</span><span class="author">| {{
-            selected.author }}</span></div>
+          <div class="card-source">
+            <span class="src">{{ selected.source }}</span
+            ><span class="author">| {{ selected.author }}</span>
+          </div>
           <span class="close" @click="selected = null">✕</span>
         </div>
         <h1 class="modal-title">{{ selected.title }}</h1>
         <p class="modal-summary">{{ selected.summary }}</p>
-        <div class="modal-meta">RELEVANCE: <b>{{ selected.relevance }}</b> WORDS: <b>{{ selected.words }}</b><span
-            class="ml-auto muted">{{ selected.collected }}</span></div>
+        <div class="modal-meta">
+          RELEVANCE: <b>{{ selected.relevance }}</b> WORDS:
+          <b>{{ selected.words }}</b
+          ><span class="ml-auto muted">{{ selected.collected }}</span>
+        </div>
         <div class="modal-actions">
-          <button class="btn-black large" :disabled="!getArticleUrl(selected)" @click.stop="openFullArticle">{{
-            getArticleUrl(selected) ? "OPEN FULL ARTICLE ↗" : "NO LINK AVAILABLE" }}</button><button
-            class="btn-outline">FLAG</button>
+          <button
+            class="btn-black large"
+            :disabled="!getArticleUrl(selected)"
+            @click.stop="openFullArticle"
+          >
+            {{
+              getArticleUrl(selected)
+                ? "OPEN FULL ARTICLE ↗"
+                : "NO LINK AVAILABLE"
+            }}</button
+          ><button class="btn-outline">FLAG</button>
         </div>
       </div>
     </div>
@@ -72,10 +116,20 @@
 </template>
 
 <script setup>
-import { ref, computed, watch, onMounted, onBeforeUnmount, nextTick } from "vue";
+import {
+  ref,
+  computed,
+  watch,
+  onMounted,
+  onBeforeUnmount,
+  nextTick,
+} from "vue";
 import * as THREE from "three";
+import {
+  CSS2DRenderer,
+  CSS2DObject,
+} from "three/examples/jsm/renderers/CSS2DRenderer.js";
 import api from "../services/api";
-
 
 const props = defineProps({
   search: String,
@@ -92,162 +146,519 @@ const articles = ref([]);
 const loading = ref(false);
 const error = ref(null);
 const canvasContainer = ref(null);
-const stats = ref({ total: 0, cats: 0, kw: 0, sites: 0 });
-let scene, camera, renderer, animationId, graphGroup;
-const group1Palette = ["#ff5a1f", "#2d5bff", "#22c55e", "#7c3aed", "#facc15", "#ef4444", "#06b6d4", "#111"];
+const stats = ref({ total: 0, sites: 0, kw: 0 });
+const activeFilters = ref([]); // [{ type: 'site'|'keyword', id: string, label: string }]
+let scene,
+  camera,
+  renderer,
+  labelRenderer,
+  animationId,
+  graphGroup,
+  raycaster,
+  mouse;
+const group1Palette = [
+  "#ff5a1f",
+  "#2d5bff",
+  "#22c55e",
+  "#7c3aed",
+  "#facc15",
+  "#ef4444",
+  "#06b6d4",
+  "#111",
+];
 
 async function getArticles() {
   const { data } = await api.get("/items?limit=1000");
   return data.items;
 }
 
-function getArticleUrl(a) { return a ? a.url || a.link || a.href || null : null; }
+function getArticleUrl(a) {
+  return a ? a.url || a.link || a.href || null : null;
+}
 function normalizeArticle(raw, index) {
-  const content = raw.article || raw.description || "";   // was raw.content || raw.summary
-  const color = group1Palette[index % group1Palette.length];
-  const isDark = ["#111", "#2D5BFF", "#7C3AED", "#EF4444"].includes(color);
+  const content = raw.article || raw.description || "";
+
+  // Consistent category color map
+  const categoryColors = {
+    MARKETS: "#ff5a1f",
+    AI: "#2d5bff",
+    CRYPTO: "#7c3aed",
+    TECH: "#22c55e",
+    WIRE: "#facc15",
+    POLITICS: "#ef4444",
+    BUSINESS: "#06b6d4",
+    SPORTS: "#111",
+  };
+
+  const category = (raw.category || "WIRE").toUpperCase();
+  const color =
+    categoryColors[category] || group1Palette[index % group1Palette.length];
+  const isDark = ["#111", "#2D5BFF", "#7C3AED", "#EF4444"].includes(
+    color.toUpperCase(),
+  );
+
+  // Parse keywords from raw.keywords, raw.tags, or raw.topics - fallback to category if empty
+  const keywordSource =
+    raw.keywords || raw.tags || raw.topics || raw.category || [];
+  const keywords = Array.isArray(keywordSource)
+    ? keywordSource
+    : typeof keywordSource === "string"
+      ? keywordSource.split(",").map((k) => k.trim())
+      : [];
+
   return {
-    id: raw.id ?? raw.link ?? index,                        // raw.url doesn't exist; use raw.link
-    source: (raw.source || "WEB").toUpperCase(),             // raw.source_name doesn't exist
+    id: raw.id ?? raw.link ?? index,
+    source: (raw.source || "WEB").toUpperCase(),
     author: raw.author || "Scraped",
-    badge: raw.category || "WIRE",                           // no real "badge" field — derive from category
+    badge: category,
     badgeStyle: `background:${color}; color:${isDark ? "#fff" : "#111"}; border:1px solid #111; font-weight:800;`,
     title: raw.title || "Untitled",
-    summary: raw.description || content.slice(0, 180) + (content.length > 180 ? "..." : ""),
-    tags: [raw.category].filter(Boolean).map((t, i) => {
-      const c = group1Palette[i % group1Palette.length];
-      const dark = ["#111", "#2D5BFF", "#7C3AED", "#EF4444"].includes(c);
-      return { t: t.toUpperCase(), s: `background:${c};color:${dark ? "#fff" : "#111"};border:1px solid #111;` };
+    summary:
+      raw.description ||
+      content.slice(0, 180) + (content.length > 180 ? "..." : ""),
+    tags: keywords.filter(Boolean).map((t) => {
+      return {
+        t: t.toUpperCase(),
+        s: `background:#2d5bff;color:#111;border:1px solid #111;`,
+      };
     }),
-    relevance: raw.relevance ?? 82,       // no real scoring data exists — see note below
+    relevance: raw.relevance ?? 82,
     words: content ? content.split(/\s+/).length : 0,
-    collected: raw.published || "",       // was raw.date/collected/scraped_at
+    collected: raw.published || "",
     collection: raw.source || "SCRAPED",
-    flagged: raw.flagged || false,        // no real flag data — see note below
+    flagged: raw.flagged || false,
     color,
     category: raw.category || "All Sources",
-    status: raw.status || "Active",       // no real status data — see note below
-    priority: raw.priority || "Medium",   // no real priority data — see note below
+    status: raw.status || "Active",
+    priority: raw.priority || "Medium",
     url: raw.link || null,
     link: raw.link || null,
     href: raw.link || null,
   };
 }
-
-function buildCluster() {
-  const cats = new Map(), kws = new Map(), sites = new Map();
+function buildClusterFromList(list) {
+  const sites = new Map(),
+    kws = new Map();
   const links = [];
-  articles.value.forEach((a) => {
-    if (!cats.has(a.category)) cats.set(a.category, { id: `cat_${a.category}`, label: a.category, type: "category", count: 0 });
-    cats.get(a.category).count++;
-    if (!sites.has(a.source)) sites.set(a.source, { id: `site_${a.source}`, label: a.source, type: "site", count: 0 });
+
+  list.forEach((a) => {
+    if (!sites.has(a.source)) {
+      sites.set(a.source, {
+        id: `site_${a.source}`,
+        label: a.source,
+        type: "site",
+        count: 0,
+      });
+    }
     sites.get(a.source).count++;
+
     (a.tags || []).forEach((t) => {
       const label = (typeof t === "string" ? t : t.t).toUpperCase();
-      if (!kws.has(label)) kws.set(label, { id: `kw_${label}`, label, type: "keyword", count: 0 });
+      const kwId = `kw_${label}`;
+      if (!kws.has(label)) {
+        kws.set(label, { id: kwId, label, type: "keyword", count: 0 });
+      }
       kws.get(label).count++;
-      links.push({ source: `cat_${a.category}`, target: `kw_${label}` });
-      links.push({ source: `kw_${label}`, target: `site_${a.source}` });
+
+      links.push({ source: `site_${a.source}`, target: kwId });
     });
   });
-  const topKws = [...kws.values()].sort((a, b) => b.count - a.count).slice(0, 30);
-  const topKwIds = new Set(topKws.map((k) => k.id));
-  const filteredLinks = links.filter((l) => topKwIds.has(l.source) || topKwIds.has(l.target) || l.source.startsWith("cat_"));
-  const nodes = [...cats.values(), ...topKws, ...sites.values()];
-  stats.value = { total: nodes.length, cats: cats.size, kw: topKws.length, sites: sites.size };
-  return { nodes, links: filteredLinks };
+
+  // Apply activeFilters - strict filtering: only show clicked site + its keywords
+  let filteredNodes = [];
+  let filteredLinks = links;
+
+  if (activeFilters.value.length > 0) {
+    const clickedSite = activeFilters.value.find((f) => f.type === "site");
+
+    if (clickedSite) {
+      // Show ONLY this site + its connected keywords
+      const siteNode = sites.get(clickedSite.label);
+      if (siteNode) {
+        filteredNodes.push(siteNode);
+        // Find all keywords connected to this site
+        const connectedKwIds = new Set();
+        links.forEach((l) => {
+          if (l.source === clickedSite.id) {
+            connectedKwIds.add(l.target);
+          }
+        });
+        // Add those keyword nodes
+        connectedKwIds.forEach((kwId) => {
+          const kwLabel = kwId.split("_")[1];
+          if (kws.has(kwLabel)) filteredNodes.push(kws.get(kwLabel));
+        });
+        // Keep only links from this site to its keywords
+        filteredLinks = links.filter(
+          (l) => l.source === clickedSite.id && connectedKwIds.has(l.target),
+        );
+      }
+    } else {
+      // Only keyword filters - show keywords + their sites
+      const keywordFilters = activeFilters.value.filter(
+        (f) => f.type === "keyword",
+      );
+      const siteIds = new Set();
+      const kwIds = new Set(keywordFilters.map((f) => f.id));
+
+      links.forEach((l) => {
+        if (kwIds.has(l.target)) siteIds.add(l.source);
+      });
+
+      filteredNodes = [
+        ...[...sites.values()].filter((n) => siteIds.has(n.id)),
+        ...[...kws.values()].filter((n) => kwIds.has(n.id)),
+      ];
+      filteredLinks = links.filter(
+        (l) => siteIds.has(l.source) && kwIds.has(l.target),
+      );
+    }
+  } else {
+    // No filters: show top 40 keywords + all sites
+    const topKws = [...kws.values()]
+      .sort((a, b) => b.count - a.count)
+      .slice(0, 40);
+    const topKwIds = new Set(topKws.map((k) => k.id));
+    filteredLinks = links.filter(
+      (l) => topKwIds.has(l.target) || l.source.startsWith("site_"),
+    );
+    filteredNodes = [...sites.values(), ...topKws];
+  }
+
+  const nodeSites = filteredNodes.filter((n) => n.type === "site").length;
+  const nodeKws = filteredNodes.filter((n) => n.type === "keyword").length;
+  stats.value = { total: filteredNodes.length, sites: nodeSites, kw: nodeKws };
+
+  return { nodes: filteredNodes, links: filteredLinks };
+}
+
+function handleNodeClick(event) {
+  if (!renderer || !camera || !scene) return;
+  const rect = renderer.domElement.getBoundingClientRect();
+  mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+  mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+  raycaster.setFromCamera(mouse, camera);
+  const intersects = raycaster.intersectObjects(
+    graphGroup.children.filter((obj) => obj.type === "Mesh"),
+  );
+
+  if (intersects.length > 0) {
+    const clickedNode = intersects[0].object.userData;
+    const newFilter = {
+      type: clickedNode.type,
+      id: clickedNode.id,
+      label: clickedNode.label,
+    };
+    if (!activeFilters.value.some((f) => f.id === newFilter.id)) {
+      activeFilters.value.push(newFilter);
+      initThree();
+    }
+  }
+}
+
+function removeFilter(index) {
+  activeFilters.value.splice(index);
+  initThree();
+}
+
+function resetDrillDown() {
+  activeFilters.value = [];
+  initThree();
 }
 
 function initThree() {
   if (!canvasContainer.value) return;
   const container = canvasContainer.value;
-  const W = container.clientWidth, H = 460;
-  if (renderer) { container.innerHTML = ""; cancelAnimationFrame(animationId); }
-  scene = new THREE.Scene(); scene.background = new THREE.Color("#fefefd"); scene.fog = new THREE.Fog("#fefefd", 35, 85);
-  camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 1000); camera.position.set(0, 0, 38);
-  renderer = new THREE.WebGLRenderer({ antialias: true }); renderer.setSize(W, H); renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  const W = container.clientWidth,
+    H = 460;
+
+  if (renderer) {
+    renderer.domElement.removeEventListener("click", handleNodeClick);
+    container.innerHTML = "";
+    cancelAnimationFrame(animationId);
+    labelRenderer?.domElement?.remove();
+  }
+
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color("#fefefd");
+  scene.fog = new THREE.Fog("#fefefd", 42, 95);
+
+  camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 1000);
+  camera.position.set(0, 2, 38);
+  camera.lookAt(0, 0, 0);
+
+  renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(W, H);
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setClearColor(0x000000, 0);
+  renderer.domElement.style.cursor = "pointer";
   container.appendChild(renderer.domElement);
-  scene.add(new THREE.AmbientLight(0xffffff, 1));
-  const dl = new THREE.DirectionalLight(0xffffff, 0.6); dl.position.set(10, 10, 10); scene.add(dl);
-  graphGroup = new THREE.Group(); scene.add(graphGroup);
-  const { nodes, links } = buildCluster();
+
+  labelRenderer = new CSS2DRenderer();
+  labelRenderer.setSize(W, H);
+  labelRenderer.domElement.style.position = "absolute";
+  labelRenderer.domElement.style.top = "0px";
+  labelRenderer.domElement.style.pointerEvents = "none";
+  container.appendChild(labelRenderer.domElement);
+
+  raycaster = new THREE.Raycaster();
+  mouse = new THREE.Vector2();
+  renderer.domElement.addEventListener("click", handleNodeClick);
+
+  scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+  const dl = new THREE.DirectionalLight(0xffffff, 0.35);
+  dl.position.set(8, 12, 5);
+  scene.add(dl);
+
+  graphGroup = new THREE.Group();
+  scene.add(graphGroup);
+
+  const { nodes, links } = buildClusterFromList(filteredArticles.value);
   const nodeMap = new Map();
+
+  const siteMat = new THREE.MeshStandardMaterial({
+    color: 0xff5a1f,
+    roughness: 0.4,
+    metalness: 0.1,
+  });
+  const kwMat = new THREE.MeshStandardMaterial({
+    color: 0x2d5bff,
+    roughness: 0.5,
+    metalness: 0.05,
+  });
+
+  const siteNodes = nodes.filter((n) => n.type === "site");
+  const keywordNodes = nodes.filter((n) => n.type === "keyword");
+
+  const meshes = [];
+
   nodes.forEach((n, i) => {
-    const radius = n.type === "category" ? 1.6 + n.count * 0.1 : n.type === "keyword" ? 0.55 + n.count * 0.12 : 0.4 + n.count * 0.03;
-    const geo = new THREE.SphereGeometry(radius, 18, 18);
-    const mat = new THREE.MeshStandardMaterial({ color: n.type === "category" ? 0xff5a1f : n.type === "keyword" ? 0x2d5bff : 0x111111 });
+    // Consistent sizes: sites bigger, keywords smaller
+    const nodeRadius = n.type === "site" ? 1.6 : 0.6;
+
+    const geo = new THREE.SphereGeometry(nodeRadius, 24, 24);
+    const mat = n.type === "site" ? siteMat : kwMat;
+
     const mesh = new THREE.Mesh(geo, mat);
-    const angle = (i / nodes.length) * Math.PI * 2 * 4;
-    const r = n.type === "category" ? 5 : n.type === "keyword" ? 13 + Math.random() * 5 : 22 + Math.random() * 4;
-    mesh.position.set(Math.cos(angle) * r + (Math.random() - 0.5) * 3, Math.sin(angle) * r + (Math.random() - 0.5) * 3, (Math.random() - 0.5) * 8);
-    mesh.userData = n; graphGroup.add(mesh); nodeMap.set(n.id, mesh);
+
+    // Initial placement: sites inner ring, keywords outer ring
+    let angle, r;
+    if (n.type === "site") {
+      const siteIndex = siteNodes.indexOf(n);
+      const t = siteIndex / Math.max(siteNodes.length, 1);
+      angle = t * Math.PI * 2 * 1.5;
+      r = 10 + Math.random() * 6;
+    } else {
+      const kwIndex = keywordNodes.indexOf(n);
+      const t = kwIndex / Math.max(keywordNodes.length, 1);
+      angle = t * Math.PI * 2 * 2.5;
+      r = 20 + Math.random() * 8;
+    }
+
+    mesh.position.set(
+      Math.cos(angle) * r + (Math.random() - 0.5) * 2,
+      Math.sin(angle) * r + (Math.random() - 0.5) * 2,
+      (Math.random() - 0.5) * 5,
+    );
+
+    mesh.userData = { ...n, nodeRadius };
+
+    // Add text label
+    const labelDiv = document.createElement("div");
+    labelDiv.className = "node-label";
+    labelDiv.textContent = n.label;
+    labelDiv.style.color = "#111";
+    labelDiv.style.fontSize = n.type === "site" ? "10px" : "8px";
+    labelDiv.style.fontFamily = '"IBM Plex Mono", monospace';
+    labelDiv.style.fontWeight = "700";
+    labelDiv.style.padding = "2px 4px";
+    labelDiv.style.background = "rgba(254, 254, 253, 0.9)";
+    labelDiv.style.border = "1px solid #111";
+    labelDiv.style.whiteSpace = "nowrap";
+    const label = new CSS2DObject(labelDiv);
+    label.position.set(0, nodeRadius + 0.8, 0);
+    mesh.add(label);
+
+    graphGroup.add(mesh);
+    nodeMap.set(n.id, mesh);
+    meshes.push(mesh);
   });
-  const lineMat = new THREE.LineBasicMaterial({ color: 0xd8d4cf, transparent: true, opacity: 0.35 });
+
+  // Collision separation pass - push overlapping spheres apart
+  const iterations = 50;
+  const padding = 0.4;
+
+  for (let iter = 0; iter < iterations; iter++) {
+    for (let i = 0; i < meshes.length; i++) {
+      for (let j = i + 1; j < meshes.length; j++) {
+        const a = meshes[i];
+        const b = meshes[j];
+        const dist = a.position.distanceTo(b.position);
+        const minDist = a.userData.nodeRadius + b.userData.nodeRadius + padding;
+
+        if (dist < minDist && dist > 0.001) {
+          const overlap = minDist - dist;
+          const dir = new THREE.Vector3()
+            .subVectors(a.position, b.position)
+            .normalize();
+
+          a.position.addScaledVector(dir, overlap * 0.5);
+          b.position.addScaledVector(dir, -overlap * 0.5);
+        }
+      }
+    }
+  }
+
+  const lineMat = new THREE.LineBasicMaterial({
+    color: 0xe5e2de,
+    transparent: true,
+    opacity: 0.25,
+  });
+
   links.forEach((l) => {
-    const a = nodeMap.get(l.source), b = nodeMap.get(l.target); if (!a || !b) return;
-    const geo = new THREE.BufferGeometry().setFromPoints([a.position, b.position]);
-    const line = new THREE.Line(geo, lineMat); graphGroup.add(line);
+    const a = nodeMap.get(l.source),
+      b = nodeMap.get(l.target);
+    if (!a || !b) return;
+    const geo = new THREE.BufferGeometry().setFromPoints([
+      a.position,
+      b.position,
+    ]);
+    const line = new THREE.Line(geo, lineMat);
+    graphGroup.add(line);
   });
-  const animate = () => { animationId = requestAnimationFrame(animate); graphGroup.rotation.y += 0.0007; graphGroup.rotation.x += 0.0002; renderer.render(scene, camera); };
+
+  const animate = () => {
+    animationId = requestAnimationFrame(animate);
+    graphGroup.rotation.y += 0.0005;
+    graphGroup.rotation.x += 0.00015;
+    renderer.render(scene, camera);
+    labelRenderer.render(scene, camera);
+  };
   animate();
+
   window.addEventListener("resize", () => {
     if (!canvasContainer.value) return;
-    const w = canvasContainer.value.clientWidth; camera.aspect = w / H; camera.updateProjectionMatrix(); renderer.setSize(w, H);
+    const w = canvasContainer.value.clientWidth;
+    camera.aspect = w / H;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, H);
+    labelRenderer.setSize(w, H);
   });
 }
 
 const fetchArticles = async () => {
-  loading.value = true; error.value = null;
+  loading.value = true;
+  error.value = null;
   try {
     const res = await getArticles();
-    let rawList = Array.isArray(res) ? res : res?.data || res?.articles || res?.items || [];
+    let rawList = Array.isArray(res)
+      ? res
+      : res?.data || res?.articles || res?.items || [];
     articles.value = rawList.map(normalizeArticle);
-    await nextTick(); initThree();
-  } catch (e) { error.value = e.message || "Failed to fetch"; }
-  finally { loading.value = false; }
+    await nextTick();
+    initThree();
+  } catch (e) {
+    error.value = e.message || "Failed to fetch";
+  } finally {
+    loading.value = false;
+  }
 };
 onMounted(fetchArticles);
-onBeforeUnmount(() => { cancelAnimationFrame(animationId); renderer?.dispose(); });
+onBeforeUnmount(() => {
+  if (renderer)
+    renderer.domElement.removeEventListener("click", handleNodeClick);
+  cancelAnimationFrame(animationId);
+  renderer?.dispose();
+  labelRenderer?.domElement?.remove();
+});
 
 const filteredArticles = computed(() => {
   let list = articles.value.filter((a) => {
     if (props.flaggedOnly && !a.flagged) return false;
-    if (props.category && props.category !== "All Sources" && a.source.toUpperCase() !== props.category.toUpperCase()) return false;
-    if (props.status && props.status.length > 0 && !props.status.includes(a.status)) return false;
-    if (props.priority && props.priority.length > 0 && !props.priority.includes(a.priority)) return false;
+    if (
+      props.category &&
+      props.category !== "All Sources" &&
+      a.source.toUpperCase() !== props.category.toUpperCase()
+    )
+      return false;
+    if (
+      props.status &&
+      props.status.length > 0 &&
+      !props.status.includes(a.status)
+    )
+      return false;
+    if (
+      props.priority &&
+      props.priority.length > 0 &&
+      !props.priority.includes(a.priority)
+    )
+      return false;
     if (props.search) {
       const q = props.search.toLowerCase();
-      const haystack = `${a.title} ${a.summary} ${a.source} ${a.tags.map(t => t.t).join(" ")} ${a.category}`.toLowerCase();
+      const haystack =
+        `${a.title} ${a.summary} ${a.source} ${a.tags.map((t) => t.t).join(" ")} ${a.category}`.toLowerCase();
       if (!haystack.includes(q)) return false;
     }
     return true;
   });
-  if (props.sort === "relevance") list = [...list].sort((a, b) => b.relevance - a.relevance);
-  else if (props.sort === "words") list = [...list].sort((a, b) => b.words - a.words);
-  else list = [...list].sort((a, b) => {
-    const da = new Date(a.collected).getTime() || 0;
-    const db = new Date(b.collected).getTime() || 0;
-    return db - da;
-  });
+
+  // Apply activeFilters from cluster clicks
+  if (activeFilters.value.length > 0) {
+    list = list.filter((a) => {
+      return activeFilters.value.every((f) => {
+        if (f.type === "site") return a.source === f.label;
+        if (f.type === "keyword") return a.tags.some((t) => t.t === f.label);
+        return true;
+      });
+    });
+  }
+
+  if (props.sort === "relevance")
+    list = [...list].sort((a, b) => b.relevance - a.relevance);
+  else if (props.sort === "words")
+    list = [...list].sort((a, b) => b.words - a.words);
+  else
+    list = [...list].sort((a, b) => {
+      const da = new Date(a.collected).getTime() || 0;
+      const db = new Date(b.collected).getTime() || 0;
+      return db - da;
+    });
   return list;
 });
 
-function openArticle(a) { selected.value = a; }
+function openArticle(a) {
+  selected.value = a;
+}
 function openFullArticle() {
   const url = getArticleUrl(selected.value);
   if (url) window.open(url, "_blank", "noopener,noreferrer");
 }
 
-watch(filteredArticles, (l) => {
-  const flagged = l.filter(a => a.flagged).length;
-  const sources = new Set(l.map(a => a.source)).size;
-  const totalFlagged = articles.value.filter(a => a.flagged).length;
-  emit("update:count", { count: l.length, flagged, sources, totalFlagged });
-}, { immediate: true });
+watch(
+  filteredArticles,
+  (l) => {
+    const flagged = l.filter((a) => a.flagged).length;
+    const sources = new Set(l.map((a) => a.source)).size;
+    const totalFlagged = articles.value.filter((a) => a.flagged).length;
+    emit("update:count", { count: l.length, flagged, sources, totalFlagged });
+  },
+  { immediate: true },
+);
+
+// Re-render three.js when filters change
+watch(
+  filteredArticles,
+  async () => {
+    if (!canvasContainer.value) return;
+    await nextTick();
+    initThree();
+  },
+  { deep: true },
+);
 
 defineExpose({ fetchArticles, loading, error });
 </script>
-
 <style scoped>
 .grid-wrapper {
   flex: 1;
@@ -279,6 +690,8 @@ defineExpose({ fetchArticles, loading, error });
   gap: 12px;
   font-size: 8px;
   font-weight: 400;
+  align-items: center;
+  flex-wrap: wrap;
 }
 
 .legend i {
@@ -288,9 +701,50 @@ defineExpose({ fetchArticles, loading, error });
   margin-right: 4px;
 }
 
+.active-filters {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.filter-chip {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 4px 8px;
+  background: #ff5a1f;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.filter-chip:hover {
+  background: #e54a10;
+}
+
+.btn-reset {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 8px;
+  font-weight: 700;
+  padding: 4px 8px;
+  background: #111;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-reset:hover {
+  background: #333;
+}
+
 .graph-canvas {
   width: 100%;
   height: 460px;
+  position: relative;
+}
+
+.node-label {
+  pointer-events: none !important;
 }
 
 .grid {
