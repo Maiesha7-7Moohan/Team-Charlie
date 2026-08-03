@@ -8,7 +8,7 @@ from flask import Blueprint, jsonify, request, current_app
 search_bp = Blueprint("search", __name__, url_prefix="/api/search")
 
 
-@search_bp.route("/", methods=["GET"])
+@search_bp.route("", methods=["GET"])
 def search_articles():
 
     search_term = request.args.get("q")

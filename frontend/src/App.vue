@@ -11,7 +11,7 @@
           <EngagementChart />
         </section>
         <section class="bottom-row">
-          <WebsiteManager/>
+          <WebsiteManager />
           <Insights />
           <ProvinceTable />
         </section>
@@ -20,57 +20,25 @@
 
     <!-- ==================== COLLECTION (SECOND, SAME PAGE) ==================== -->
     <div class="app-root">
-      <SearchBar
-        :count="filteredCount"
-        :flagged-total="flaggedTotal"
-        :flagged-only="flaggedOnly"
-        :sync-time="syncTime"
-        :search="searchQuery"
-        :sort="sortBy"
-        :show-filters="showFilters"
-        :has-active-filters="hasActiveFilters"
-        :sources-count="uniqueSources"
-        @update:search="searchQuery = $event"
-        @update:sort="sortBy = $event"
-        @toggle-filters="showFilters = !showFilters"
-        @toggle-flagged="flaggedOnly = !flaggedOnly"
-        @clear="clearAll"
-      />
+      <SearchBar :count="filteredCount" :flagged-total="flaggedTotal" :flagged-only="flaggedOnly" :sync-time="syncTime"
+        :search="searchQuery" :sort="sortBy" :show-filters="showFilters" :has-active-filters="hasActiveFilters"
+        :sources-count="uniqueSources" @update:search="searchQuery = $event" @update:sort="sortBy = $event"
+        @toggle-filters="showFilters = !showFilters" @toggle-flagged="flaggedOnly = !flaggedOnly" @clear="clearAll"
+        @export="handleExport" />
 
       <div class="main-layout">
         <!-- FIX: renamed class to avoid collision with FilterBar's own .filter-overlay -->
-        <div
-          v-if="showFilters"
-          class="collection-filter-wrapper"
-          @click.self="showFilters = false"
-        >
-          <FilterBar
-            :is-open="showFilters"
-            :search="searchQuery"
-            :sort="sortBy"
-            :category="selectedCategory"
-            :status="selectedStatus"
-            :priority="selectedPriority"
-            @update:search="searchQuery = $event"
-            @update:sort="sortBy = $event"
-            @update:category="selectedCategory = $event"
-            @update:status="selectedStatus = $event"
-            @update:priority="selectedPriority = $event"
-            @close="showFilters = false"
-            @clear="clearAll"
-          />
+        <div v-if="showFilters" class="collection-filter-wrapper" @click.self="showFilters = false">
+          <FilterBar :is-open="showFilters" :search="searchQuery" :sort="sortBy" :category="selectedCategory"
+            :status="selectedStatus" :priority="selectedPriority" @update:search="searchQuery = $event"
+            @update:sort="sortBy = $event" @update:category="selectedCategory = $event"
+            @update:status="selectedStatus = $event" @update:priority="selectedPriority = $event"
+            @close="showFilters = false" @clear="clearAll" />
         </div>
 
-        <ArticleGrid
-          :search="searchQuery"
-          :sort="sortBy"
-          :category="selectedCategory"
-          :status="selectedStatus"
-          :priority="selectedPriority"
-          :flagged-only="flaggedOnly"
-          @update:count="handleCountUpdate"
-          @search-tag="searchQuery = $event"
-        />
+        <ArticleGrid :search="searchQuery" :sort="sortBy" :category="selectedCategory" :status="selectedStatus"
+          :priority="selectedPriority" :flagged-only="flaggedOnly" @update:count="handleCountUpdate"
+          @search-tag="searchQuery = $event" />
       </div>
 
       <div class="footer">
@@ -86,6 +54,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import api from "./services/api";
 import WebsiteManager from "./Components/WebsiteManager.vue";
 import SearchBar from "./Components/SearchBar.vue";
 import ArticleGrid from "./Components/ArticleGrid.vue";
@@ -139,35 +108,71 @@ function clearAll() {
   flaggedOnly.value = false;
   showFilters.value = false;
 }
+async function handleExport(format) {
+  const { data } = await api.get("/items");
+  const articles = data.items;
 
-function handleExport(format) {
-  // use whatever ref currently holds the visible articles, e.g. from ArticleGrid via handleCountUpdate,
-  // or refetch from /api/items directly here
-  const data = articlesRef.value;
+  if (!articles || articles.length === 0) return;
+
   let blob;
   if (format === "csv") {
-    const header = Object.keys(data[0]).join(",");
-    const rows = data.map(a => Object.values(a).map(v => `"${String(v).replace(/"/g,'""')}"`).join(","));
+    const header = Object.keys(articles[0]).join(",");
+    const rows = articles.map(a =>
+      Object.values(a).map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")
+    );
     blob = new Blob([header + "\n" + rows.join("\n")], { type: "text/csv" });
   } else {
-    blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+    blob = new Blob([JSON.stringify(articles, null, 2)], { type: "application/json" });
   }
+
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
-  a.href = url; a.download = `articles.${format}`;
+  a.href = url;
+  a.download = `articles.${format}`;
   a.click();
   URL.revokeObjectURL(url);
 }
 </script>
 
 <style scoped>
-.page-root { min-height: 100vh; display: flex; flex-direction: column; }
-.dashboard-section { background: #ffffff; width: 100%; }
-.dashboard { padding: 0; background: #fff; }
-.charts-row { display: flex; gap: 20px; padding: 0 20px; flex-wrap: wrap; }
-.charts-row > * { flex: 1; }
-.bottom-row { display: flex; gap: 20px; padding: 0 20px 20px 20px; flex-wrap: wrap; }
-.bottom-row > * { flex: 1; }
+.page-root {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.dashboard-section {
+  background: #ffffff;
+  width: 100%;
+}
+
+.dashboard {
+  padding: 0;
+  background: #fff;
+}
+
+.charts-row {
+  display: flex;
+  gap: 20px;
+  padding: 0 20px;
+  flex-wrap: wrap;
+}
+
+.charts-row>* {
+  flex: 1;
+}
+
+.bottom-row {
+  display: flex;
+  gap: 20px;
+  padding: 0 20px 20px 20px;
+  flex-wrap: wrap;
+}
+
+.bottom-row>* {
+  flex: 1;
+}
+
 .app-root {
   background: #f7f7f5;
   min-height: 100vh;
@@ -176,18 +181,21 @@ function handleExport(format) {
   color: #111827;
   font-family: "Inter", sans-serif;
 }
+
 .main-layout {
   display: flex;
   flex: 1;
   align-items: stretch;
   position: relative;
 }
+
 .collection-filter-wrapper {
   position: fixed;
   inset: 0;
   top: 84px;
   z-index: 100;
 }
+
 .footer {
   height: 28px;
   display: flex;
@@ -201,7 +209,24 @@ function handleExport(format) {
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-.footer-left { display: flex; gap: 12px; align-items: center; }
-.live { display: flex; align-items: center; gap: 6px; color: #aaa; }
-.live .dot { width: 6px; height: 6px; background: #22c55e; border-radius: 50%; }
+
+.footer-left {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.live {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #aaa;
+}
+
+.live .dot {
+  width: 6px;
+  height: 6px;
+  background: #22c55e;
+  border-radius: 50%;
+}
 </style>
