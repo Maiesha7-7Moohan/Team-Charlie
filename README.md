@@ -94,5 +94,5 @@ The cleaning and organization process ensures that data from different news sour
 
 This workflow also improves data quality by reducing duplicates, standardizing fields, and maintaining an organized project structure for future development.
 
-Author: Khanya Gcilitshane
+Author: Khanya Gcilitshaneg
 Role: Data Cleaning, Organization, and Storage
