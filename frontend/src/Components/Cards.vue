@@ -38,7 +38,7 @@ const latestDate = ref("-");
 
 onMounted(async () => {
   try {
-    const { data: articles } = await api.get("/items");
+    const { data: { items: articles } } = await api.get("/items?limit=1000");
     // ... rest unchanged, everything below "const articles = ..." stays exactly the same
     totalArticles.value = articles.length;
 

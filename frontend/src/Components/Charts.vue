@@ -74,7 +74,7 @@ const chartOptions = {
 
 onMounted(async () => {
   try {
-    const { data: articles } = await api.get("/items");
+    const { data: { items: articles } } = await api.get("/items?limit=1000");
 
     const categoryCounts = {};
 
@@ -124,6 +124,7 @@ onMounted(async () => {
   box-sizing: border-box;
   overflow: hidden;
 }
+
 .chart-card h3 {
   margin: 0 0 16px 0;
   height: 24px;
@@ -133,12 +134,14 @@ onMounted(async () => {
   font-weight: 600;
   line-height: 24px;
 }
+
 .chart-wrapper {
   position: relative;
   flex: 1;
   width: 100%;
   min-height: 0;
 }
+
 .chart-wrapper canvas {
   width: 100% !important;
   height: 100% !important;

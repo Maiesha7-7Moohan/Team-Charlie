@@ -35,7 +35,7 @@ const dailyStats = ref([]);
 
 onMounted(async () => {
   try {
-    const { data: articles } = await api.get("/items");
+    const { data: { items: articles } } = await api.get("/items?limit=1000");
     const stats = {};
 
     articles.forEach((article) => {
@@ -107,6 +107,7 @@ td {
   color: #2e7d32;
   font-weight: 600;
 }
+
 @media (max-width: 480px) {
   .table-card {
     padding: 10px;
