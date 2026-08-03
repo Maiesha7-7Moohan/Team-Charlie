@@ -212,7 +212,7 @@ onBeforeUnmount(() => { cancelAnimationFrame(animationId); renderer?.dispose(); 
 const filteredArticles = computed(() => {
   let list = articles.value.filter((a) => {
     if (props.flaggedOnly && !a.flagged) return false;
-    if (props.category && props.category !== "All Sources" && a.category !== props.category) return false;
+    if (props.category && props.category !== "All Sources" && a.source.toUpperCase() !== props.category.toUpperCase()) return false;
     if (props.status && props.status.length > 0 && !props.status.includes(a.status)) return false;
     if (props.priority && props.priority.length > 0 && !props.priority.includes(a.priority)) return false;
     if (props.search) {

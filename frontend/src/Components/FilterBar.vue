@@ -42,7 +42,7 @@
 <script setup lang="ts">
 const props = defineProps<{ isOpen: boolean; search: string; sort: string; category: string; status: string[]; priority: string[]; }>();
 const emit = defineEmits(["update:search","update:sort","update:category","update:status","update:priority","clear","close"]);
-const categories = ["All Sources","Reuters","AP News","BBC","The Guardian","Bloomberg","Politico","Al Jazeera"];
+const categories = ["All Sources", "BBC", "CNN", "TechCrunch", "CoinDesk"];
 const statusOptions = ["Active","In Review","Blocked","Closed"];
 const priorityOptions = ["Critical","High","Medium","Low"];
 function toggleStatus(val: string) {
