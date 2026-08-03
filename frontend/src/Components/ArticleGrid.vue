@@ -108,7 +108,7 @@
                 ? "OPEN FULL ARTICLE ↗"
                 : "NO LINK AVAILABLE"
             }}</button
-          ><button class="btn-outline">FLAG</button>
+          >
         </div>
       </div>
     </div>
