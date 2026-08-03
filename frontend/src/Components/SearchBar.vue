@@ -14,7 +14,7 @@
       </div>
       <div class="header-right">
         <span class="live-dot"><span class="dot"></span>{{ sourcesCount ?? 8 }} sources</span>
-        <span class="link">Export</span>
+        <span class="link" @click="emit('export', 'csv')">Export</span>
       </div>
     </div>
 
@@ -48,7 +48,7 @@ defineProps<{
   hasActiveFilters?: boolean;
   sourcesCount?: number;
 }>();
-const emit = defineEmits(["update:search", "update:sort", "toggle-filters", "toggle-flagged", "clear"]);
+const emit = defineEmits(["update:search", "update:sort", "toggle-filters", "toggle-flagged", "clear", "export"]);
 </script>
 
 <style scoped>

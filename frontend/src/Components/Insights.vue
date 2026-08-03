@@ -9,6 +9,7 @@
 <script setup>
 import { ref, onMounted } from "vue";
 import { Pie } from "vue-chartjs";
+import api from "../services/api";
 
 import {
   Chart as ChartJS,
@@ -52,9 +53,7 @@ const chartOptions = {
 };
 
 onMounted(async () => {
-
-  const response = await fetch("http://127.0.0.1:5000/api/items");
-  const articles = await response.json();
+  const { data: articles } = await api.get("/items");
 
   const sourceCount = {};
 

@@ -29,19 +29,13 @@
 
 <script setup>
 import { ref, onMounted } from "vue";
+import api from "../services/api";
 
 const dailyStats = ref([]);
 
 onMounted(async () => {
   try {
-    const response = await fetch("http://127.0.0.1:5000/api/items");
-
-    if (!response.ok) {
-      throw new Error("Failed to fetch data");
-    }
-
-    const articles = await response.json();
-
+    const { data: articles } = await api.get("/items");
     const stats = {};
 
     articles.forEach((article) => {
