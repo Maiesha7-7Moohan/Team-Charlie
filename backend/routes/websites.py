@@ -61,3 +61,24 @@ def add_website():
         json.dump(websites, file, indent=2, ensure_ascii=False)
 
     return jsonify(new_website), 201
+
+
+
+@websites_bp.route("/<int:index>", methods=["DELETE"])
+def delete_website(index):
+    data_file = os.path.join(
+        current_app.root_path, "data", "cleaned", "websites.json"
+    )
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        websites = json.load(file)
+
+    if index < 0 or index >= len(websites):
+        return jsonify({"error": "Website not found."}), 404
+
+    websites.pop(index)
+
+    with open(data_file, "w", encoding="utf-8") as file:
+        json.dump(websites, file, indent=2, ensure_ascii=False)
+
+    return jsonify({"deleted": index}), 200

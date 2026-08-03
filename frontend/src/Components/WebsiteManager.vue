@@ -3,12 +3,13 @@
     <h3>Manage Target Sites</h3>
 
     <ul class="site-list" v-if="websites.length">
-      <li class="site-item" v-for="site in websites" :key="site.url">
+      <li class="site-item" v-for="(site, index) in websites" :key="index">
         <span class="site-dot"></span>
         <div class="site-info">
           <span class="site-name">{{ site.name }}</span>
           <span class="site-url">{{ site.url }}</span>
         </div>
+        <button type="button" class="site-delete" @click="removeSite(index)">&times;</button>
       </li>
     </ul>
     <p class="empty-state" v-else>No sites configured yet.</p>
@@ -34,9 +35,14 @@ async function loadWebsites() {
   websites.value = res.data;
 }
 async function addSite() {
-  await api.post("/websites", { name: newName.value, url: newUrl.value });
+  const res = await api.post("/websites", { name: newName.value, url: newUrl.value });
+  websites.value.push(res.data);   // show it immediately, no re-fetch needed
   newName.value = ""; newUrl.value = "";
-  await loadWebsites();
+}
+
+async function removeSite(index) {
+  await api.delete(`/websites/${index}`);
+  websites.value.splice(index, 1);  // remove it immediately
 }
 onMounted(loadWebsites);
 </script>
@@ -55,6 +61,15 @@ onMounted(loadWebsites);
   box-sizing: border-box;
   overflow: hidden;
   transition: all 0.18s ease;
+}
+
+.site-delete {
+  margin-left: auto;
+  border: none;
+  background: none;
+  color: #999;
+  font-size: 16px;
+  cursor: pointer;
 }
 
 .manager-card:hover {
