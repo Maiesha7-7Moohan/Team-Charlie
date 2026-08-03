@@ -248,11 +248,16 @@ Verify that sending a valid article payload creates a new entry, assigns an auto
 
 ### Actual Result
 
-The item was created with id: 5 and written to data/articles.json. Subsequent GET /api/items requests included the new record.
+The request was rejected by the server.
 
+The endpoint returned:
+
+- HTTP Status Code: 400 Bad Request
+
+The article was **not** created and no new record was added to `data/articles.json`.
 ### Status
 
- PASS
+ FAIL
 
 ---
 
@@ -366,16 +371,220 @@ Duplicate articles existing in articles.json were ignored as expected based on U
 
 ---
 
-## Test Summary
+## TC-API-007: Retrieve Website Sources
+
+### Test Type
+
+Functional API Testing
+
+### Feature
+
+Website Source Management
+
+### Objective
+
+Verify that configured websites can be retrieved successfully.
+
+### Preconditions
+
+- Flask application running.
+
+### Test Steps
+
+| Step | Action |
+|---|---|
+| 1 | Send GET request to http://127.0.0.1:5000/api/websites |
+
+### Expected Result
+
+HTTP Status Code: 200 OK
+
+Configured website list returned.
+
+### Actual Result
+
+The endpoint returned HTTP 200 OK and successfully returned the configured websites.
+
+### Status
+
+PASS
+
+---
+
+## TC-API-008: Create Website With Invalid Data
+
+### Test Type
+
+Negative API Testing
+
+### Feature
+
+Website Source Management
+
+### Objective
+
+Verify that invalid website data is rejected.
+
+### Preconditions
+
+- Flask application running.
+
+### Test Steps
+
+| Step | Action |
+|---|---|
+| 1 | Send POST request to http://127.0.0.1:5000/api/websites |
+| 2 | Send invalid or incomplete JSON |
+
+### Expected Result
+
+The server should reject the request.
+
+HTTP Status Code: 400 Bad Request
+
+### Actual Result
+
+The endpoint returned HTTP 400 Bad Request.
+
+### Status
+
+PASS
+
+---
+
+## TC-API-009: Retrieve History Log
+
+### Test Type
+
+Functional API Testing
+
+### Feature
+
+History Logging
+
+### Objective
+
+Verify that scrape history records can be retrieved.
+
+### Preconditions
+
+- Flask application running.
+
+### Test Steps
+
+| Step | Action |
+|---|---|
+| 1 | Send GET request to http://127.0.0.1:5000/api/history |
+
+### Expected Result
+
+HTTP Status Code: 200 OK
+
+History records returned.
+
+### Actual Result
+
+The endpoint returned HTTP 200 OK and displayed the available history records.
+
+### Status
+
+PASS
+
+---
+
+## TC-API-010: Retrieve Dashboard Statistics
+
+### Test Type
+
+Functional API Testing
+
+### Feature
+
+Statistics Dashboard
+
+### Objective
+
+Verify that dashboard statistics are returned successfully.
+
+### Preconditions
+
+- Flask application running.
+
+### Test Steps
+
+| Step | Action |
+|---|---|
+| 1 | Send GET request to http://127.0.0.1:5000/api/statistics |
+
+### Expected Result
+
+HTTP Status Code: 200 OK
+
+Statistics JSON returned.
+
+### Actual Result
+
+The endpoint returned HTTP 200 OK with dashboard statistics.
+
+### Status
+
+PASS
+
+---
+
+## TC-API-011: Access Invalid Statistics Endpoint
+
+### Test Type
+
+Negative API Testing
+
+### Feature
+
+Endpoint Validation
+
+### Objective
+
+Verify that an incorrect endpoint returns 404 Not Found.
+
+### Preconditions
+
+- Flask application running.
+
+### Test Steps
+
+| Step | Action |
+|---|---|
+| 1 | Send GET request to http://127.0.0.1:5000/api/stats |
+
+### Expected Result
+
+HTTP Status Code: 404 Not Found
+
+### Actual Result
+
+The endpoint returned HTTP 404 Not Found because `/api/stats` does not exist.
+
+### Status
+
+PASS
+
+---
+
+## Updated Test Summary
 
 | Test ID | Result |
 |----------|--------|
-| TC-API-001 | |
-| TC-API-002 | |
-| TC-API-003 | |
-| TC-API-004 | |
-| TC-API-005 | |
-| TC-API-006 | |
+| TC-API-001 | PASS |
+| TC-API-002 | PASS |
+| TC-API-003 | FAIL |
+| TC-API-004 | FAIL |
+| TC-API-005 | PASS |
+| TC-API-006 | Not Tested |
+| TC-API-007 | PASS |
+| TC-API-008 | PASS |
+| TC-API-009 | PASS |
+| TC-API-010 | PASS |
+| TC-API-011 | PASS |
 
 ---
 
@@ -383,8 +592,16 @@ Duplicate articles existing in articles.json were ignored as expected based on U
 
 ☐ PASS
 
-☐ FAIL
+☑ FAIL
 
 ---
 
 ## QA Comments
+
+Two defects were identified during API testing:
+
+- `GET /api/items/{id}` returns **500 Internal Server Error** due to a missing `id` field (`KeyError: 'id'`).
+- `DELETE /api/items/{id}` returns **500 Internal Server Error** for the same root cause.
+
+All other tested endpoints, including Health Check, Search, Upload, History, Websites, Statistics, and Unauthorized Dashboard access, behaved as expected.
+
