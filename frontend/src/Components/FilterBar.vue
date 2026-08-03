@@ -26,13 +26,9 @@
           </div>
         </div>
         <div class="filter-section">
-          <label class="label">STATUS</label><label v-for="s in statusOptions" :key="s" class="check"><input type="checkbox" :checked="status.includes(s)" @change="toggleStatus(s)" /> {{ s }}</label>
-        </div>
-        <div class="filter-section">
-          <label class="label">PRIORITY</label><label v-for="p in priorityOptions" :key="p" class="check"><input type="checkbox" :checked="priority.includes(p)" @change="togglePriority(p)" /> {{ p }}</label>
-        </div>
-        <div class="filter-actions">
-          <button class="btn-clear-full" @click="emit('clear'); emit('close');">CLEAR ALL FILTERS</button>
+          <div class="filter-actions">
+            <button class="btn-clear-full" @click="emit('clear'); emit('close');">CLEAR ALL FILTERS</button>
+          </div>
         </div>
       </div>
     </div>
