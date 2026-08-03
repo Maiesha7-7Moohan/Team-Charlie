@@ -97,44 +97,40 @@ let scene, camera, renderer, animationId, graphGroup;
 const group1Palette = ["#ff5a1f", "#2d5bff", "#22c55e", "#7c3aed", "#facc15", "#ef4444", "#06b6d4", "#111"];
 
 async function getArticles() {
-  const { data: { items: articles } } = await api.get("/items?limit=1000");
-  return data;
+  const { data } = await api.get("/items?limit=1000");
+  return data.items;
 }
 
 function getArticleUrl(a) { return a ? a.url || a.link || a.href || null : null; }
 function normalizeArticle(raw, index) {
-  const content = raw.content || raw.summary || "";
+  const content = raw.article || raw.description || "";   // was raw.content || raw.summary
   const color = group1Palette[index % group1Palette.length];
-  const isDark = ["#111", "#2d5bff", "#7c3aed", "#ef4444"].includes(color);
+  const isDark = ["#111", "#2D5BFF", "#7C3AED", "#EF4444"].includes(color);
   return {
-    id: raw.id || raw.url || index,
-    source: (raw.source || raw.source_name || "WEB").toUpperCase(),
+    id: raw.id ?? raw.link ?? index,                        // raw.url doesn't exist; use raw.link
+    source: (raw.source || "WEB").toUpperCase(),             // raw.source_name doesn't exist
     author: raw.author || "Scraped",
-    badge: raw.badge || "WIRE",
+    badge: raw.category || "WIRE",                           // no real "badge" field — derive from category
     badgeStyle: `background:${color}; color:${isDark ? "#fff" : "#111"}; border:1px solid #111; font-weight:800;`,
     title: raw.title || "Untitled",
-    summary: raw.summary || content.slice(0, 180) + (content.length > 180 ? "..." : ""),
-    tags: Array.isArray(raw.tags) ? raw.tags.map((t, i) => {
+    summary: raw.description || content.slice(0, 180) + (content.length > 180 ? "..." : ""),
+    tags: [raw.category].filter(Boolean).map((t, i) => {
       const c = group1Palette[i % group1Palette.length];
-      const dark = ["#111", "#2d5bff", "#7c3aed", "#ef4444"].includes(c);
-      return typeof t === "string" ? { t: t.toUpperCase(), s: `background:${c};color:${dark ? "#fff" : "#111"};border:1px solid #111;` } : { t: t.t, s: t.s || `background:${c};color:${dark ? "#fff" : "#111"};border:1px solid #111;` };
-    }) : (raw.keywords || []).slice(0, 3).map((k, i) => {
-      const c = group1Palette[i % group1Palette.length];
-      const dark = ["#111", "#2d5bff", "#7c3aed", "#ef4444"].includes(c);
-      return { t: typeof k === "string" ? k.toUpperCase() : k.t, s: `background:${c};color:${dark ? "#fff" : "#111"};border:1px solid #111;` };
+      const dark = ["#111", "#2D5BFF", "#7C3AED", "#EF4444"].includes(c);
+      return { t: t.toUpperCase(), s: `background:${c};color:${dark ? "#fff" : "#111"};border:1px solid #111;` };
     }),
-    relevance: raw.relevance ?? 82,
-    words: raw.words || (content ? content.split(/\s+/).length : 0),
-    collected: raw.date || raw.collected || raw.scraped_at || "",
-    collection: raw.collection || "SCRAPED",
-    flagged: raw.flagged || false,
+    relevance: raw.relevance ?? 82,       // no real scoring data exists — see note below
+    words: content ? content.split(/\s+/).length : 0,
+    collected: raw.published || "",       // was raw.date/collected/scraped_at
+    collection: raw.source || "SCRAPED",
+    flagged: raw.flagged || false,        // no real flag data — see note below
     color,
-    category: raw.category || raw.source_name || "All Sources",
-    status: raw.status || "Active",
-    priority: raw.priority || "Medium",
-    url: raw.url || raw.link || null,
+    category: raw.category || "All Sources",
+    status: raw.status || "Active",       // no real status data — see note below
+    priority: raw.priority || "Medium",   // no real priority data — see note below
+    url: raw.link || null,
     link: raw.link || null,
-    href: raw.href || null,
+    href: raw.link || null,
   };
 }
 
