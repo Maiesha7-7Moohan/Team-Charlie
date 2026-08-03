@@ -44,7 +44,7 @@ def run_scraper():
     total_cleaned = clean_all(current_app.root_path)
 
     # Log this run to history.json
-    history_file = os.path.join(current_app.root_path, "data", "history.json")
+    history_file = os.path.join(current_app.root_path, "data", "cleaned", "history.json")
     with open(history_file, "r", encoding="utf-8") as f:
         history = json.load(f)
 

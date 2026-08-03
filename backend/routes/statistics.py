@@ -10,8 +10,8 @@ statistics_bp = Blueprint("statistics", __name__, url_prefix="/api/statistics")
 @statistics_bp.route("", methods=["GET"])
 def get_statistics():
     articles_file = os.path.join(current_app.root_path, "data", "cleaned", "articles_cleaned.json")
-    websites_file = os.path.join(current_app.root_path, "data", "websites.json")
-    history_file = os.path.join(current_app.root_path, "data", "history.json")
+    websites_file = os.path.join(current_app.root_path, "data", "cleaned", "websites.json")   # <-- add "cleaned"
+    history_file = os.path.join(current_app.root_path, "data", "cleaned", "history.json")     # <-- add "cleaned"
 
     with open(articles_file, encoding="utf-8") as f:
         articles = json.load(f)
@@ -19,6 +19,7 @@ def get_statistics():
         websites = json.load(f)
     with open(history_file, encoding="utf-8") as f:
         history = json.load(f)
+    
 
     sources = {a["source"] for a in articles}
     failed = sum(1 for h in history for r in h.get("results", []) if not r.get("success", True))

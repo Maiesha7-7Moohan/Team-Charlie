@@ -467,14 +467,27 @@ def main():
 
     )
 
-import json
-path = "data/cleaned/articles_cleaned.json"
-articles = json.load(open(path, encoding="utf-8"))
-for i, a in enumerate(articles, start=1):
-    a["id"] = i
-json.dump(articles, open(path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+def run():
+    """Entry point called by scrape.py's SCRAPERS dict."""
+    try:
+        links = get_article_links()
+        articles = {}
+
+        for link in links:
+            article = extract_article(link)
+            if article:
+                articles[article["article_url"]] = article
+
+        data = list(articles.values())
+
+        os.makedirs("data/raw", exist_ok=True)
+        with open("data/raw/cnn_raw.json", "w", encoding="utf-8") as f:
+            json.dump(data, f, indent=4, ensure_ascii=False)
+
+        return {"success": True, "message": f"Scraped {len(data)} articles"}
+    except Exception as e:
+        return {"success": False, "message": str(e)}
 
 
 if __name__ == "__main__":
-
     main()

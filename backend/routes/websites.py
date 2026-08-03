@@ -14,6 +14,7 @@ def get_websites():
     data_file = os.path.join(
         current_app.root_path,
         "data",
+        "cleaned",
         "websites.json"
     )
 
@@ -28,6 +29,7 @@ def add_website():
     data_file = os.path.join(
         current_app.root_path,
         "data",
+        "cleaned",
         "websites.json")
     payload = request.get_json(silent=True)
 

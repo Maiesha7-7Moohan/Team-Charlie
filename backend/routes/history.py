@@ -14,6 +14,7 @@ def get_history():
     data_file = os.path.join(
         current_app.root_path,
         "data",
+        "cleaned",
         "history.json"
     )
 
