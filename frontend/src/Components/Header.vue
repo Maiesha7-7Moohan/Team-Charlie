@@ -2,14 +2,14 @@
   <header class="header">
     <div class="status-bar">
       <span>● Live</span>
-      <span>South African News Analytics</span>
+      <span>Lightning News Analytics</span>
       <span>• 9 provinces tracked</span>
       <span>• Updated daily</span>
       <span>• Jul 2026</span>
     </div>
 
     <div class="dashboard-header-content">
-      <h1>South African News Intelligence</h1>
+      <h1>Lightning News</h1>
 
       <p>
         Publication analytics across all nine provinces • Aug 2025 - Jul 2026

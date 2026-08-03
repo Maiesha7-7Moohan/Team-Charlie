@@ -229,4 +229,80 @@ async function handleExport(format) {
   background: #22c55e;
   border-radius: 50%;
 }
+
+
+/* ================= MOBILE ================= */
+@media (max-width: 768px) {
+  .dashboard {
+    padding: 10px;
+  }
+
+  /* Cards stack */
+  .dashboard-card-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  .charts-row {
+    flex-direction: column;
+    gap: 15px;
+    padding: 0 10px;
+  }
+
+  .charts-row > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+ 
+  .bottom-row {
+    flex-direction: column;
+    gap: 15px;
+    padding: 0 10px 20px;
+  }
+
+  .bottom-row > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+ 
+  .main-layout {
+    flex-direction: column;
+  }
+
+  .footer {
+    flex-direction: column;
+    justify-content: center;
+    align-items: flex-start;
+    height: auto;
+    gap: 6px;
+    padding: 10px;
+    font-size: 10px;
+  }
+
+  .footer-left {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  /* Search/filter overlay */
+  .collection-filter-wrapper {
+    top: 70px;
+  }
+
+  /* Prevent tables/charts overflowing */
+  table {
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  canvas {
+    max-width: 100%;
+  }
+}
+
+
 </style>
