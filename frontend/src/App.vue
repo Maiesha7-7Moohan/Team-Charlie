@@ -11,6 +11,7 @@
           <EngagementChart />
         </section>
         <section class="bottom-row">
+          <WebsiteManager/>
           <Insights />
           <ProvinceTable />
         </section>
@@ -85,6 +86,7 @@
 
 <script setup lang="ts">
 import { ref, computed } from "vue";
+import WebsiteManager from "./Components/WebsiteManager.vue";
 import SearchBar from "./Components/SearchBar.vue";
 import ArticleGrid from "./Components/ArticleGrid.vue";
 import Header from "./Components/Header.vue";
@@ -136,6 +138,25 @@ function clearAll() {
   selectedPriority.value = [];
   flaggedOnly.value = false;
   showFilters.value = false;
+}
+
+function handleExport(format) {
+  // use whatever ref currently holds the visible articles, e.g. from ArticleGrid via handleCountUpdate,
+  // or refetch from /api/items directly here
+  const data = articlesRef.value;
+  let blob;
+  if (format === "csv") {
+    const header = Object.keys(data[0]).join(",");
+    const rows = data.map(a => Object.values(a).map(v => `"${String(v).replace(/"/g,'""')}"`).join(","));
+    blob = new Blob([header + "\n" + rows.join("\n")], { type: "text/csv" });
+  } else {
+    blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+  }
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = `articles.${format}`;
+  a.click();
+  URL.revokeObjectURL(url);
 }
 </script>
 
