@@ -8,7 +8,6 @@
       :flagged-total="flaggedTotal"
       :flagged-only="flaggedOnly"
       :sync-time="syncTime"
-      
       :search="searchQuery"
       :sort="sortBy"
       :show-filters="showFilters"
