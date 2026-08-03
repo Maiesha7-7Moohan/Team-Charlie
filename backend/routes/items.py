@@ -10,18 +10,20 @@ items_bp = Blueprint("items", __name__, url_prefix="/api/items")
 
 @items_bp.route("", methods=["GET"])
 def get_items():
-
-    data_file = os.path.join(
-        current_app.root_path,
-        "data",
-        "cleaned",
-        "articles_cleaned.json"
-    )
-
     with open(data_file, "r", encoding="utf-8") as file:
         articles = json.load(file)
 
-    return jsonify(articles), 200
+    page = request.args.get("page", default=1, type=int)
+    limit = request.args.get("limit", default=20, type=int)
+    start = (page - 1) * limit
+    end = start + limit
+
+    return jsonify({
+        "page": page,
+        "limit": limit,
+        "total": len(articles),
+        "items": articles[start:end]
+    }), 200
 
 @items_bp.route("/<int:item_id>", methods=["GET"])
 def get_item(item_id):  

@@ -467,6 +467,13 @@ def main():
 
     )
 
+import json
+path = "data/cleaned/articles_cleaned.json"
+articles = json.load(open(path, encoding="utf-8"))
+for i, a in enumerate(articles, start=1):
+    a["id"] = i
+json.dump(articles, open(path, "w", encoding="utf-8"), indent=2, ensure_ascii=False)
+
 
 if __name__ == "__main__":
 

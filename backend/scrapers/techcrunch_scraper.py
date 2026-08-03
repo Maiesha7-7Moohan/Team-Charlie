@@ -164,44 +164,22 @@ def scrape_feed():
 
 
 def save_raw_data(articles):
+    base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))  # backend/
+    raw_dir = os.path.join(base_dir, "data", "raw")
+    os.makedirs(raw_dir, exist_ok=True)
 
-    os.makedirs(
-        "data/raw",
-        exist_ok=True
-    )
+    output_path = os.path.join(raw_dir, "techcrunch_raw.json")
+    with open(output_path, "w", encoding="utf-8") as file:
+        json.dump(articles, file, indent=4, ensure_ascii=False)
 
-    with open(
-        "data/raw/techcrunch_raw.json",
-        "w",
-        encoding="utf-8"
-    ) as file:
-
-        json.dump(
-            articles,
-            file,
-            indent=4,
-            ensure_ascii=False
-        )
-
-    print(
-        f"\nSaved {len(articles)} articles to "
-        "data/raw/techcrunch_raw.json"
-    )
+    return output_path
 
 
-def main():
-
+def run():
     articles = scrape_feed()
-
-    print(
-        f"\nCollected {len(articles)} articles."
-    )
-
-    save_raw_data(
-        articles
-    )
+    path = save_raw_data(articles)
+    return {"success": True, "articles_found": len(articles), "path": path}
 
 
 if __name__ == "__main__":
-
-    main()
+    print(run())

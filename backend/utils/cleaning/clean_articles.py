@@ -339,173 +339,58 @@ def load_json(file_path):
             file
         )
 
-
 # ============================================
-# Load Raw Data
-# ============================================
-
-bbc_articles = load_json(
-
-    "data/raw/bbc_raw.json"
-
-)
-
-
-cnn_articles = load_json(
-
-    "data/raw/cnn_raw.json"
-
-)
-
-
-techcrunch_articles = load_json(
-
-    "data/raw/techcrunch_raw.json"
-
-)
-
-
-coindesk_articles = load_json(
-
-    "data/raw/coindesk_raw.json"
-
-)
-
-
-# ============================================
-# Combine All Articles
+# Clean All Articles (callable entry point)
 # ============================================
 
-all_articles = (
+def clean_all(base_dir):
+    """
+    Reads all raw scraper output from <base_dir>/data/raw/,
+    cleans + deduplicates it, assigns sequential ids, and writes
+    the result to <base_dir>/data/cleaned/articles_cleaned.json.
 
-    bbc_articles
+    Returns the number of cleaned articles written.
+    """
+    raw_dir = os.path.join(base_dir, "data", "raw")
+    cleaned_dir = os.path.join(base_dir, "data", "cleaned")
 
-    + cnn_articles
+    bbc_articles = load_json(os.path.join(raw_dir, "bbc_raw.json"))
+    cnn_articles = load_json(os.path.join(raw_dir, "cnn_raw.json"))
+    techcrunch_articles = load_json(os.path.join(raw_dir, "techcrunch_raw.json"))
+    coindesk_articles = load_json(os.path.join(raw_dir, "coindesk_raw.json"))
 
-    + techcrunch_articles
+    all_articles = bbc_articles + cnn_articles + techcrunch_articles + coindesk_articles
 
-    + coindesk_articles
+    cleaned_articles = []
+    seen_links = set()
 
-)
+    for article in all_articles:
+        cleaned_article = clean_article(article)
+        title = cleaned_article["title"]
+        link = cleaned_article["link"]
 
+        if not title or not link or link in seen_links:
+            continue
 
-# ============================================
-# Clean Articles
-# ============================================
+        seen_links.add(link)
+        cleaned_articles.append(cleaned_article)
 
-cleaned_articles = []
+    # Assign sequential ids so /api/items/<id> keeps working
+    for i, article in enumerate(cleaned_articles, start=1):
+        article["id"] = i
 
-seen_links = set()
+    os.makedirs(cleaned_dir, exist_ok=True)
+    output_file = os.path.join(cleaned_dir, "articles_cleaned.json")
 
+    with open(output_file, "w", encoding="utf-8") as file:
+        json.dump(cleaned_articles, file, indent=4, ensure_ascii=False)
 
-for article in all_articles:
+    print(f"Successfully cleaned and saved {len(cleaned_articles)} articles.")
+    print(f"Output file: {output_file}")
 
-    cleaned_article = clean_article(
-        article
-    )
-
-
-    title = cleaned_article[
-        "title"
-    ]
-
-
-    link = cleaned_article[
-        "link"
-    ]
-
-
-    # Skip articles without a title
-    if not title:
-
-        continue
-
-
-    # Skip articles without a link
-    if not link:
-
-        continue
+    return len(cleaned_articles)
 
 
-    # Skip duplicate articles
-    if link in seen_links:
-
-        continue
-
-
-    seen_links.add(
-        link
-    )
-
-
-    cleaned_articles.append(
-        cleaned_article
-    )
-
-
-# ============================================
-# Create Cleaned Folder
-# ============================================
-
-os.makedirs(
-
-    "data/cleaned",
-
-    exist_ok=True
-
-)
-
-
-# ============================================
-# Save Cleaned Data
-# ============================================
-
-output_file = (
-
-    "data/cleaned/"
-    "articles_cleaned.json"
-
-)
-
-
-with open(
-
-    output_file,
-
-    "w",
-
-    encoding="utf-8"
-
-) as file:
-
-    json.dump(
-
-        cleaned_articles,
-
-        file,
-
-        indent=4,
-
-        ensure_ascii=False
-
-    )
-
-
-# ============================================
-# Completion Message
-# ============================================
-
-print(
-
-    f"Successfully cleaned and saved "
-
-    f"{len(cleaned_articles)} articles."
-
-)
-
-
-print(
-
-    f"Output file: {output_file}"
-
-)
+if __name__ == "__main__":
+    # Lets you still run this file standalone, from backend/, for manual testing
+    clean_all(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
