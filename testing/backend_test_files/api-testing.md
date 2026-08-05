@@ -78,7 +78,7 @@ This testing verifies that:
 
 | Test ID | Endpoint | Method | Expected Result | Actual Result | Status | Notes |
 |---------|----------|--------|-----------------|---------------|--------|------|
-| API-007 | /api/health | GET | Confirm server is running | | | |
+| API-007 | /api/health | GET | 200 | 200 | PASS | API health check successful |
 | API-008 | /api/health | POST | Reject unsupported method | | | |
 
 ---
