@@ -4,138 +4,201 @@
 
 | Item | Details |
 |------|---------|
-| Project | News & Media Scraping Dashboard |
-| Frontend QA Tester | Nuriyah Davids |
-| Backend QA Tester | Angela Solomons |
-| Repository | Team-Charlie |
-| Current Branch | develop |
-| Last Updated | 31 July 2026 |
-
----
-
-# Overall Testing Progress
-
-| Phase | Status |
-|---------|---------|
-| Smoke Testing | Phase 1 Completed |
-| Frontend Testing | Phase 1 Completed |
-| Backend Testing | Phase 1 Completed |
-| API Testing | Phase 1 Completed |
-| Integration Testing | ⬜ Not Started |
-| Regression Testing | ⬜ Not Started |
-| Final QA Review | ⬜ Not Started |
-
----
-
-# Branch Testing Status
-
-| Branch | Feature | Ready for Testing | Tested | Bugs Found | Retested | Status |
-|---------|----------|------------------|---------|------------|----------|--------|
-| feature/dashboard | Dashboard | ⬜ | ⬜ | 0 | ⬜ | Waiting |
-| feature/search | Search | ⬜ | ⬜ | 0 | ⬜ | Waiting |
-| feature/filter | Filters | ⬜ | ⬜ | 0 | ⬜ | Waiting |
-| feature/articles | Articles | ⬜ | ⬜ | 0 | ⬜ | Waiting |
-| feature/api | Flask API | ⬜ | ⬜ | 0 | ⬜ | Waiting |
-| feature/parser | Data Parsing | ⬜ | ⬜ | 0 | ⬜ | Waiting |
-| feature/scraper | Web Scraper | ⬜ | ⬜ | 0 | ⬜ | Waiting |
-
----
-
-# Current Bugs
-
-| Bug ID | Feature | Severity | Status |
-|----------|---------|----------|--------|
-| None | - | - | - |
-
----
-
-# Testing Notes
-
-| Date | Notes |
-|------|-------|
-| | |
-
----
-
-# Next Actions
-
-- [ ] Complete Smoke Testing
-- [ ] Test Dashboard
-- [ ] Test Navigation
-- [ ] Test Search
-- [ ] Test Filters
-- [ ] Test Articles
-- [ ] Test API
-- [ ] Test Integration
-- [ ] Perform Regression Testing
-
-
-
-# QA Progress Tracker
-
-## Project Information
-
-| Item | Details |
-|------|---------|
-| Project | News & Media Scraping Dashboard |
-| QA Lead | Angela Solomons |
-| Frontend QA Tester | Nuriyah |
+| Project | Web Scraping Analytics Dashboard |
 | Team | Team Charlie |
-| Current Focus | feature/parsing complete |
-| Last Updated | July 29, 2026 |
+| Sprint | Sprint 4 |
+| QA Tester | Angela Solomons |
 
 ---
 
-# Overall Testing Progress
+# Purpose
 
-| Phase | Status | Notes |
-|---------|---------|-------|
-| Backend Parsing (`feature/parsing`) | ☑ Complete | All 4 scrapers verified & signed off |
-| Aggregator Testing (`feature/webscraping`) | ⬜ Not Started | Pending developer PR |
-| API Testing (`feature/api`) | ⬜ Not Started | Pending developer PR |
-| Frontend Smoke & UI (`feature/dashboard`) | ⬜ Not Started | Waiting for Vue dashboard build |
-| Integration Testing | ⬜ Not Started | Dummy layout ready |
-| Final QA Review | ⬜ Not Started | Waiting on develop merge |
+The purpose of this document is to track QA progress throughout the sprint.
 
----
+This tracker helps the team understand:
 
-# Branch Testing Status
-
-| Branch | Feature | Ready for Testing | Tested | Bugs Found | Retested | Status |
-|---------|----------|------------------|---------|------------|----------|--------|
-| feature/parsing | Data Parsing / Scrapers | ☑ | ☑ | 2 | ☑ | PASSED |
-| feature/webscraping | Web Scraper Orchestration | ⬜ | ⬜ | 0 | 0 | Waiting |
-| feature/api | Flask API | ⬜ | ⬜ | 0 | 0 | Waiting |
-| feature/dashboard | Dashboard UI | ⬜ | ⬜ | 0 | 0 | Waiting |
-| feature/search | Search Functionality | ⬜ | ⬜ | 0 | 0 | Waiting |
-| feature/filter | Category Filters | ⬜ | ⬜ | 0 | 0 | Waiting |
-| feature/articles | Article Display | ⬜ | ⬜ | 0 | 0 | Waiting |
+- What testing has been completed
+- What testing is currently happening
+- What issues have been discovered
+- What still needs to be done before release
 
 ---
 
-# Bug History Log
+# Overall QA Progress
 
-| Bug ID | Feature / File | Severity | Reported By | Status | Resolution |
-|----------|----------------|----------|-------------|--------|------------|
-| BUG-001 | `cnn_scrapper.py` | High | Angela Solomons | Closed | Added missing `requests` import |
-| BUG-002 | `cnn_scrapper.py` | Medium | Angela Solomons | Closed | Replaced dynamic CSS hashes with OpenGraph tags |
-| BUG-003 | `app.py` | High | Angela Solomons | Closed | Fixed incorrect HTTP status code from `40` to `404` |
-
----
-
-# QA Execution Log
-
-| Date | Activity / Notes |
-|------|------------------|
-| July 29, 2026 | Tested `feature/parsing` scripts (`coindesk`, `bbc`, `techcrunch`, `cnn`). Logged `BUG-001` & `BUG-002`. Verified fixes pushed by Zanda. Scrapers 100% passed. |
-| July 29, 2026 | Established QA file structures, bug report layouts, and dashboard test case templates for upcoming frontend review. |
-| July 30, 2026 | Completed backend testing for api endpoints, logged bug report. |
+| Testing Area | Status | Progress |
+|--------------|--------|----------|
+| Backend Testing | In Progress | 0% |
+| Frontend Testing | Not Started | 0% |
+| Bug Reporting | In Progress | 0% |
+| Regression Testing | Not Started | 0% |
+| Final QA Report | Not Started | 0% |
 
 ---
 
-# Next Actions
+# Backend Testing Progress
 
-- [x] Receive notice when backend branches are merged and ready for Phase 2 testing.
-- [ ] Receive notice when Khanya's `feature/webscraping` aggregator is ready for testing
-- [ ] Receive notice when Karah's `feature/api` endpoints are ready
-- [ ] Run smoke test and UI test suite on Nuriyah's `feature/dashboard` when pushed
+Location:
+
+```
+testing/backend/
+```
+
+| Document | Status | Notes |
+|----------|--------|-------|
+| test-plan.md | Complete | Backend testing approach created |
+| test-cases.md | Complete | Backend test checklist created |
+| api-testing.md | In Progress | Waiting for Postman results |
+| bug-reports.md | In Progress | Bugs being recorded |
+| smoke-testing.md | Not Started | Run after new build |
+| regression.md | Not Started | Requires completed fixes |
+
+---
+
+# Frontend Testing Progress
+
+Location:
+
+```
+testing/frontend/
+```
+
+| Document | Status | Notes |
+|----------|--------|-------|
+| test-plan.md | Complete | Frontend testing approach created |
+| test-cases.md | Complete | Frontend test checklist created |
+| ui-testing.md | Complete | UI checklist created |
+| bug-reports.md | Not Started | Waiting for frontend testing |
+| smoke-testing.md | Not Started | Requires working build |
+| regression.md | Not Started | Requires fixes |
+
+---
+
+# API Testing Progress
+
+| Test Area | Status | Notes |
+|-----------|--------|-------|
+| Health Endpoint | Complete | Tested server response |
+| Articles Endpoint | In Progress | /api/items tested |
+| Single Article Endpoint | Failed | Returns 500 error |
+| Search Endpoint | Complete | Search request successful |
+| Scraper Endpoint | Not Tested | Requires verification |
+| Statistics Endpoint | Not Tested | Requires verification |
+
+---
+
+# Test Execution Tracker
+
+| Test Category | Total Tests | Completed | Remaining |
+|---------------|------------:|----------:|----------:|
+| Backend Tests | 45 | | |
+| API Tests | 10 | | |
+| Frontend Tests | 45 | | |
+| UI Tests | 41 | | |
+| Regression Tests | 27 | | |
+
+---
+
+# Bug Tracking Summary
+
+| Bug ID | Description | Severity | Status |
+|--------|-------------|----------|--------|
+| BUG-001 | GET /api/items/{id} returns 500 error | High | Open |
+| BUG-002 | Invalid delete response issue | Medium | Open |
+| BUG-F001 | Article details display issue | High | Open |
+| BUG-F002 | Missing API error message | Medium | Open |
+
+---
+
+# Daily QA Updates
+
+Use this section to record daily progress.
+
+---
+
+## Date:
+
+### Completed:
+
+- 
+
+### Testing Performed:
+
+- 
+
+### Bugs Found:
+
+- 
+
+### Blockers:
+
+- 
+
+---
+
+## Date:
+
+### Completed:
+
+- 
+
+### Testing Performed:
+
+- 
+
+### Bugs Found:
+
+- 
+
+### Blockers:
+
+- 
+
+---
+
+# Current Blockers
+
+| Blocker | Impact | Owner | Status |
+|---------|--------|-------|--------|
+| | | | |
+
+---
+
+# Next Testing Tasks
+
+Priority order:
+
+1. Complete API endpoint testing.
+2. Capture Postman screenshots.
+3. Execute frontend smoke testing.
+4. Complete frontend functional testing.
+5. Retest fixed bugs.
+6. Update final QA report.
+
+---
+
+# QA Completion Checklist
+
+| Task | Completed |
+|------|-----------|
+| Backend tests executed | |
+| Frontend tests executed | |
+| API evidence collected | |
+| Bugs documented | |
+| Bug fixes retested | |
+| Regression testing completed | |
+| Final QA report updated | |
+| QA approval provided | |
+
+---
+
+# Conclusion
+
+This progress tracker provides visibility into QA activities throughout the sprint.
+
+It allows the team to quickly identify:
+
+- Testing progress
+- Remaining work
+- Current issues
+- Release readiness

@@ -1,18 +1,80 @@
 # Team Charlie API Documentation
 
-## Base URL
+## Overview
+The Team Charlie backend is built using Flask and provides a REST API for managing news articles, website sources, scraping, statistics, and history.
+
+The API reads and writes JSON files stored in the backend/data directory.
+
+---
+
+The API supports:
+
+- Health checks
+- Article management (CRUD)
+- Article search
+- Website management
+- Scraper history
+- Statistics
+
+---
+
+Technologies:
+- Python 3.x
+- Flask
+- Flask-CORS
+- BeautifulSoup4
+- Requests
+- lxml (XML parser)
+
+---
+
+# Installation
+Clone the repository:
 
 ```
-http://127.0.0.1:5000/api
+bash
+git clone <repository-url>
+cd Team-Charlie
 ```
+
+Create a virtual environment:
+
+```
+bash
+python -m venv .venv
+```
+Activate it.
+
+**Windows**
+
+```
+bash
+.venv\Scripts\activate
+```
+
+Install dependencies:
+```
+bash
+pip install -r requirements.txt
+```
+
+Run the application:
+```
+bash
+python backend/app.py
+```
+---
+
+# Base URL
+http://127.0.0.1:5000/api
 
 ---
 
 # Health Check
 
-### GET /health
+## GET /health
 
-Checks that the backend server is running.
+Checks whether the API is running.
 
 ### Parameters
 
@@ -22,11 +84,12 @@ None.
 
 ```json
 {
-    "status": "ok"
+    "status": "healthy",
+    "message": "Team Charlie API is running!"
 }
 ```
 
-Status Code:
+### Status Codes
 
 - 200 OK
 
@@ -34,30 +97,41 @@ Status Code:
 
 # Get All Articles
 
-### GET /items
+## GET /items
 
-Returns all stored articles.
+Returns a paginated list of articles.
 
-### Parameters
+### Query Parameters
 
-None.
+| Name | Type | Description |
+|------|------|-------------|
+| page | Integer | Page number (default: 1) |
+| limit | Integer | Number of articles per page (default: 20) |
 
 ### Example Response
 
 ```json
-[
-    {
-        "id": 1,
-        "title": "Python Basics",
-        "author": "Alice",
-        "source": "BBC",
-        "date": "2025-07-20",
-        "summary": "Introduction to Python."
-    }
-]
+{
+    "page": 1,
+    "limit": 20,
+    "total": 248,
+    "items": [
+        {
+            "title": "Police officer was violent rapist...",
+            "description": "The BBC can reveal...",
+            "published": "2026-07-23 05:12:30",
+            "author": "",
+            "category": "News",
+            "source": "BBC",
+            "image_url": "",
+            "article": "",
+            "link": "https://www.bbc.co.uk/news/..."
+        }
+    ]
+}
 ```
 
-Status Code:
+### Status Codes
 
 - 200 OK
 
@@ -65,7 +139,7 @@ Status Code:
 
 # Get Article by ID
 
-### GET /items/{id}
+## GET /items/{id}
 
 Returns a single article.
 
@@ -79,16 +153,20 @@ Returns a single article.
 
 ```json
 {
-    "id": 1,
-    "title": "Python Basics",
-    "author": "Alice",
+    "id": 10,
+    "title": "Example Article",
+    "description": "Example description.",
+    "published": "2026-07-23 10:15:00",
+    "author": "",
+    "category": "News",
     "source": "BBC",
-    "date": "2025-07-20",
-    "summary": "Introduction to Python."
+    "image_url": "",
+    "article": "",
+    "link": "https://..."
 }
 ```
 
-If the article doesn't exist:
+If the article cannot be found:
 
 ```json
 {
@@ -96,7 +174,7 @@ If the article doesn't exist:
 }
 ```
 
-Status Codes:
+### Status Codes
 
 - 200 OK
 - 404 Not Found
@@ -105,9 +183,9 @@ Status Codes:
 
 # Search Articles
 
-### GET /search?q=python
+## GET /search?q=keyword
 
-Searches article titles.
+Searches for articles matching the supplied keyword.
 
 ### Parameters
 
@@ -115,30 +193,7 @@ Searches article titles.
 |------|------|-------------|
 | q | String | Search keyword |
 
-### Example Response
-
-```json
-[
-    {
-        "id": 2,
-        "title": "Learning Python",
-        "author": "Bob",
-        "source": "News24",
-        "date": "2025-07-19",
-        "summary": "Python tutorial."
-    }
-]
-```
-
-Possible Errors
-
-```json
-{
-    "error": "Search query is required."
-}
-```
-
-Status Codes
+### Status Codes
 
 - 200 OK
 - 400 Bad Request
@@ -147,7 +202,7 @@ Status Codes
 
 # Create Article
 
-### POST /items
+## POST /items
 
 Creates a new article.
 
@@ -155,11 +210,15 @@ Creates a new article.
 
 ```json
 {
-    "title": "Flask Guide",
-    "author": "Karah",
+    "title": "Example Article",
+    "description": "Example description",
+    "author": "John Smith",
+    "published": "2026-08-04 10:00:00",
     "source": "BBC",
-    "date": "2025-07-27",
-    "summary": "Introduction to Flask."
+    "category": "Technology",
+    "image_url": "",
+    "article": "",
+    "link": "https://example.com"
 }
 ```
 
@@ -167,16 +226,20 @@ Creates a new article.
 
 ```json
 {
-    "id": 5,
-    "title": "Flask Guide",
-    "author": "Karah",
+    "id": 249,
+    "title": "Example Article",
+    "description": "Example description",
+    "author": "John Smith",
+    "published": "2026-08-04 10:00:00",
     "source": "BBC",
-    "date": "2025-07-27",
-    "summary": "Introduction to Flask."
+    "category": "Technology",
+    "image_url": "",
+    "article": "",
+    "link": "https://example.com"
 }
 ```
 
-Status Codes
+### Status Codes
 
 - 201 Created
 - 400 Bad Request
@@ -185,7 +248,7 @@ Status Codes
 
 # Update Article
 
-### PUT /items/{id}
+## PUT /items/{id}
 
 Updates an existing article.
 
@@ -199,11 +262,15 @@ Updates an existing article.
 
 ```json
 {
-    "title": "Updated Title",
-    "author": "Karah",
+    "title": "Updated Article",
+    "description": "Updated description",
+    "author": "John Smith",
+    "published": "2026-08-04 10:00:00",
     "source": "BBC",
-    "date": "2025-07-27",
-    "summary": "Updated summary."
+    "category": "Technology",
+    "image_url": "",
+    "article": "",
+    "link": "https://example.com"
 }
 ```
 
@@ -211,16 +278,20 @@ Updates an existing article.
 
 ```json
 {
-    "id": 5,
-    "title": "Updated Title",
-    "author": "Karah",
+    "id": 249,
+    "title": "Updated Article",
+    "description": "Updated description",
+    "author": "John Smith",
+    "published": "2026-08-04 10:00:00",
     "source": "BBC",
-    "date": "2025-07-27",
-    "summary": "Updated summary."
+    "category": "Technology",
+    "image_url": "",
+    "article": "",
+    "link": "https://example.com"
 }
 ```
 
-Status Codes
+### Status Codes
 
 - 200 OK
 - 400 Bad Request
@@ -230,7 +301,7 @@ Status Codes
 
 # Delete Article
 
-### DELETE /items/{id}
+## DELETE /items/{id}
 
 Deletes an article.
 
@@ -248,7 +319,7 @@ Deletes an article.
 }
 ```
 
-Status Codes
+### Status Codes
 
 - 200 OK
 - 404 Not Found
@@ -257,13 +328,9 @@ Status Codes
 
 # Get Websites
 
-### GET /websites
+## GET /websites
 
-Returns all configured scraping websites.
-
-### Parameters
-
-None.
+Returns all configured websites used for scraping.
 
 ### Example Response
 
@@ -272,11 +339,15 @@ None.
     {
         "name": "BBC",
         "url": "https://www.bbc.com/news"
+    },
+    {
+        "name": "CNN",
+        "url": "https://www.cnn.com"
     }
 ]
 ```
 
-Status Code
+### Status Codes
 
 - 200 OK
 
@@ -284,9 +355,9 @@ Status Code
 
 # Add Website
 
-### POST /websites
+## POST /websites
 
-Adds a website to the scraping list.
+Adds a new website.
 
 ### Request Body
 
@@ -306,36 +377,32 @@ Adds a website to the scraping list.
 }
 ```
 
-Status Codes
+### Status Codes
 
 - 201 Created
 - 400 Bad Request
 
 ---
 
-# Scraping History
+# Scraper History
 
-### GET /history
+## GET /history
 
 Returns previous scraper runs.
-
-### Parameters
-
-None.
 
 ### Example Response
 
 ```json
 [
     {
-        "timestamp": "2025-07-27T10:15:00",
+        "timestamp": "2026-08-04T14:30:00",
         "website": "BBC",
-        "articles_found": 15
+        "articles_found": 25
     }
 ]
 ```
 
-Status Code
+### Status Codes
 
 - 200 OK
 
@@ -343,20 +410,91 @@ Status Code
 
 # Statistics
 
-### GET /stats
+## GET /statistics
 
-Returns scraper statistics.
+Returns basic statistics about the stored articles.
 
 ### Example Response
 
 ```json
 {
-    "total_articles": 150,
-    "total_websites": 4,
-    "last_scrape": "2025-07-27T10:15:00"
+    "total_articles": 248,
+    "total_sources": 4
 }
 ```
 
-Status Code
+### Status Codes
 
 - 200 OK
+
+---
+
+# Scraper
+
+## POST /scrape
+
+Runs one or more configured news scrapers.
+
+### Request Body
+
+```json
+{
+    "target": "bbc"
+}
+```
+
+Supported targets include:
+
+- BBC
+- CNN
+- TechCrunch
+- CoinDesk
+
+### Example Response
+
+```json
+{
+    "message": "Scraper endpoint is ready. Waiting for website details."
+}
+```
+
+### Status Codes
+
+- 200 OK
+
+---
+
+## Typical HTTP responses:
+
+| Status | Meaning |
+|--------|---------|
+| 200 | Success |
+| 201 | Resource Created |
+| 400 | Bad Request |
+| 404 | Resource Not Found |
+| 500 | Internal Server Error |
+
+---
+
+## Notes
+- JSON files are used as the application's data store.
+- Articles support CRUD (Create, Read, Update, Delete) operations.
+- Pagination is available on the /api/items endpoint.
+- The scraper modules collect articles from multiple news sources and save them as JSON.
+
+## Known Limitation
+
+Some older articles contained in `articles_cleaned.json` may not include an `id` field. CRUD operations that rely on article IDs require articles to contain unique identifiers.
+
+## My Contribution (Karah Fisher)
+
+I was responsible for the Flask backend API. My responsibilities included:
+
+- Creating and registering Flask Blueprints
+- Implementing REST API endpoints
+- Developing CRUD operations for articles
+- Integrating scraper routes
+- Implementing HTTP status codes and error handling
+- Testing API endpoints
+- Investigating and fixing backend bugs
+- Updating the API documentation
