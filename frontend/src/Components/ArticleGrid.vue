@@ -158,15 +158,17 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import api from "../services/api";
 
+// after
 const props = defineProps({
   search: String,
   sort: String,
-  category: String,
-  status: { type: Array, default: () => [] },
-  priority: { type: Array, default: () => [] },
-  bookmarkedOnly: Boolean, // was flaggedOnly
+  categories: { type: Array, default: () => [] },
+  author: { type: String, default: "" },
+  dateFrom: { type: String, default: "" },
+  dateTo: { type: String, default: "" },
+  bookmarkedOnly: Boolean,
 });
-const emit = defineEmits(["search-tag", "update:count", "clear-search"]);
+const emit = defineEmits(["search-tag", "update:count", "clear-search", "update:meta"]);
 
 const selected = ref(null);
 const articles = ref([]);
@@ -677,27 +679,47 @@ onBeforeUnmount(() => {
   labelRenderer?.domElement?.remove();
 });
 
+const availableCategories = computed(() => {
+  const set = new Set(articles.value.map((a) => a.category).filter(Boolean));
+  return [...set].sort();
+});
+const availableAuthors = computed(() => {
+  const set = new Set(articles.value.map((a) => a.author).filter(Boolean));
+  return [...set].sort();
+});
+
+watch(
+  articles,
+  () => {
+    emit("update:meta", {
+      categories: availableCategories.value,
+      authors: availableAuthors.value,
+    });
+  },
+  { immediate: true },
+);
+
 const filteredArticles = computed(() => {
   let list = articles.value.filter((a) => {
     if (props.bookmarkedOnly && !a.bookmarked) return false;
     if (
-      props.category &&
-      props.category !== "All Sources" &&
-      a.source.toUpperCase() !== props.category.toUpperCase()
+      props.categories &&
+      props.categories.length > 0 &&
+      !props.categories.includes(a.category)
     )
       return false;
-    if (
-      props.status &&
-      props.status.length > 0 &&
-      !props.status.includes(a.status)
-    )
-      return false;
-    if (
-      props.priority &&
-      props.priority.length > 0 &&
-      !props.priority.includes(a.priority)
-    )
-      return false;
+    if (props.author && a.author !== props.author) return false;
+    if (props.dateFrom) {
+      const d = new Date(a.collected);
+      const from = new Date(props.dateFrom);
+      if (!isNaN(d) && !isNaN(from) && d < from) return false;
+    }
+    if (props.dateTo) {
+      const d = new Date(a.collected);
+      const to = new Date(props.dateTo);
+      to.setHours(23, 59, 59, 999); // include the whole "to" day
+      if (!isNaN(d) && !isNaN(to) && d > to) return false;
+    }
     if (props.search) {
       const q = props.search.toLowerCase();
       const haystack =
