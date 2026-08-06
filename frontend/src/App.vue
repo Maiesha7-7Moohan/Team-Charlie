@@ -20,31 +20,67 @@
 
     <!-- ==================== COLLECTION (SECOND, SAME PAGE) ==================== -->
     <div class="app-root">
-      <SearchBar :count="filteredCount" :flagged-total="flaggedTotal" :flagged-only="flaggedOnly" :sync-time="syncTime"
-        :search="searchQuery" :sort="sortBy" :show-filters="showFilters" :has-active-filters="hasActiveFilters"
-        :sources-count="uniqueSources" @update:search="searchQuery = $event" @update:sort="sortBy = $event"
-        @toggle-filters="showFilters = !showFilters" @toggle-flagged="flaggedOnly = !flaggedOnly" @clear="clearAll"
-        @export="handleExport" />
+      <SearchBar
+        :count="filteredCount"
+        :bookmarked-total="bookmarkedTotal"
+        :bookmarked-only="bookmarkedOnly"
+        :sync-time="syncTime"
+        :search="searchQuery"
+        :show-filters="showFilters"
+        :has-active-filters="hasActiveFilters"
+        :sources-count="uniqueSources"
+        @update:search="searchQuery = $event"
+        @update:bookmarked-only="bookmarkedOnly = $event"
+        @toggle-filters="showFilters = !showFilters"
+        @clear="clearAll"
+        @export="handleExport"
+        @filter-change="handleFilterChange"
+      />
 
       <div class="main-layout">
-        <!-- FIX: renamed class to avoid collision with FilterBar's own .filter-overlay -->
-        <div v-if="showFilters" class="collection-filter-wrapper" @click.self="showFilters = false">
-          <FilterBar :is-open="showFilters" :search="searchQuery" :sort="sortBy" :category="selectedCategory"
-            :status="selectedStatus" :priority="selectedPriority" @update:search="searchQuery = $event"
-            @update:sort="sortBy = $event" @update:category="selectedCategory = $event"
-            @update:status="selectedStatus = $event" @update:priority="selectedPriority = $event"
-            @close="showFilters = false" @clear="clearAll" />
+        <div
+          v-if="showFilters"
+          class="collection-filter-wrapper"
+          @click.self="showFilters = false"
+        >
+          <FilterBar
+            :is-open="showFilters"
+            :search="searchQuery"
+            :sort="sortBy"
+            :category="selectedCategory"
+            :status="selectedStatus"
+            :priority="selectedPriority"
+            @update:search="searchQuery = $event"
+            @update:sort="sortBy = $event"
+            @update:category="selectedCategory = $event"
+            @update:status="selectedStatus = $event"
+            @update:priority="selectedPriority = $event"
+            @close="showFilters = false"
+            @clear="clearAll"
+          />
         </div>
 
-        <ArticleGrid :search="searchQuery" :sort="sortBy" :category="selectedCategory" :status="selectedStatus"
-          :priority="selectedPriority" :flagged-only="flaggedOnly" @update:count="handleCountUpdate"
-          @search-tag="searchQuery = $event" />
+        <ArticleGrid
+          :search="searchQuery"
+          :sort="sortBy"
+          :category="selectedCategory"
+          :status="selectedStatus"
+          :priority="selectedPriority"
+          :bookmarked-only="bookmarkedOnly"
+          @update:count="handleCountUpdate"
+          @search-tag="searchQuery = $event"
+        />
       </div>
 
       <div class="footer">
         <div class="footer-left">
-          <span class="live"><span class="dot"></span>LIVE COLLECTION ACTIVE</span>
-          <span>{{ filteredCount }} articles • {{ uniqueSources }} sources • {{ flaggedCount }} flagged</span>
+          <span class="live">
+            <span class="dot"></span>LIVE COLLECTION ACTIVE
+          </span>
+          <span>
+            {{ filteredCount }} articles • {{ uniqueSources }} sources •
+            {{ bookmarkedCount }} bookmarked
+          </span>
         </div>
         <div>Miscellaneous v0.4.1 © 2026</div>
       </div>
@@ -66,38 +102,54 @@ import Insights from "./Components/Insights.vue";
 import ProvinceTable from "./Components/ProvinceTable.vue";
 import FilterBar from "./Components/FilterBar.vue";
 
+interface CountPayload {
+  count?: number;
+  bookmarked?: number;
+  sources?: number;
+  totalBookmarked?: number;
+}
+
 const showFilters = ref(false);
 const searchQuery = ref("");
 const sortBy = ref("newest");
 const selectedCategory = ref("All Sources");
 const selectedStatus = ref<string[]>([]);
 const selectedPriority = ref<string[]>([]);
-const flaggedOnly = ref(false);
+const bookmarkedOnly = ref(false);
 const syncTime = ref("09:22");
 
 const filteredCount = ref(8);
-const flaggedCount = ref(3);
+const bookmarkedCount = ref(3);
 const uniqueSources = ref(8);
-const flaggedTotal = ref(3);
+const bookmarkedTotal = ref(3);
 
 const hasActiveFilters = computed(
   () =>
     selectedCategory.value !== "All Sources" ||
     selectedStatus.value.length > 0 ||
     selectedPriority.value.length > 0 ||
-    flaggedOnly.value ||
-    searchQuery.value.trim().length > 0
+    bookmarkedOnly.value ||
+    searchQuery.value.trim().length > 0,
 );
 
-function handleCountUpdate(payload: any) {
+function handleCountUpdate(payload: number | CountPayload) {
   if (typeof payload === "number") {
     filteredCount.value = payload;
   } else if (payload && typeof payload === "object") {
     filteredCount.value = payload.count ?? filteredCount.value;
-    flaggedCount.value = payload.flagged ?? flaggedCount.value;
+    bookmarkedCount.value = payload.bookmarked ?? bookmarkedCount.value;
     uniqueSources.value = payload.sources ?? uniqueSources.value;
-    if (payload.totalFlagged !== undefined) flaggedTotal.value = payload.totalFlagged;
+    if (payload.totalBookmarked !== undefined)
+      bookmarkedTotal.value = payload.totalBookmarked;
   }
+}
+
+function handleFilterChange(payload: {
+  search: string;
+  bookmarkedOnly: boolean;
+}) {
+  searchQuery.value = payload.search;
+  bookmarkedOnly.value = payload.bookmarkedOnly;
 }
 
 function clearAll() {
@@ -105,32 +157,54 @@ function clearAll() {
   selectedCategory.value = "All Sources";
   selectedStatus.value = [];
   selectedPriority.value = [];
-  flaggedOnly.value = false;
+  bookmarkedOnly.value = false;
   showFilters.value = false;
 }
-async function handleExport(format) {
-  const { data } = await api.get("/items");
-  const articles = data.items;
 
-  if (!articles || articles.length === 0) return;
+async function handleExport(format: string) {
+  try {
+    // Pass current filters to API so export matches what's filtered
+    const params = new URLSearchParams({
+      search: searchQuery.value,
+      sort: sortBy.value,
+      category: selectedCategory.value,
+      bookmarkedOnly: String(bookmarkedOnly.value),
+    });
 
-  let blob;
-  if (format === "csv") {
-    const header = Object.keys(articles[0]).join(",");
-    const rows = articles.map(a =>
-      Object.values(a).map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")
-    );
-    blob = new Blob([header + "\n" + rows.join("\n")], { type: "text/csv" });
-  } else {
-    blob = new Blob([JSON.stringify(articles, null, 2)], { type: "application/json" });
+    if (selectedStatus.value.length)
+      params.append("status", selectedStatus.value.join(","));
+    if (selectedPriority.value.length)
+      params.append("priority", selectedPriority.value.join(","));
+
+    const { data } = await api.get(`/items?${params.toString()}`);
+    const articles = data.items;
+
+    if (!articles || articles.length === 0) return;
+
+    let blob: Blob;
+    if (format === "csv") {
+      const header = Object.keys(articles[0]).join(",");
+      const rows = articles.map((a: Record<string, unknown>) =>
+        Object.values(a)
+          .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+          .join(","),
+      );
+      blob = new Blob([header + "\n" + rows.join("\n")], { type: "text/csv" });
+    } else {
+      blob = new Blob([JSON.stringify(articles, null, 2)], {
+        type: "application/json",
+      });
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `articles.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Export failed:", err);
   }
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `articles.${format}`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 </script>
 
@@ -154,23 +228,25 @@ async function handleExport(format) {
 .charts-row {
   display: flex;
   gap: 20px;
-  padding: 0 20px;
-  flex-wrap: wrap;
+  padding: 20px;
+  align-items: stretch;
 }
 
-.charts-row>* {
-  flex: 1;
+.charts-row > * {
+  flex: 1 1 50%;
+  min-width: 450px;
 }
 
 .bottom-row {
   display: flex;
   gap: 20px;
-  padding: 0 20px 20px 20px;
-  flex-wrap: wrap;
+  padding: 20px;
+  align-items: stretch;
 }
 
-.bottom-row>* {
-  flex: 1;
+.bottom-row > * {
+  flex: 1 1 33.333%;
+  min-width: 380px;
 }
 
 .app-root {
@@ -192,7 +268,7 @@ async function handleExport(format) {
 .collection-filter-wrapper {
   position: fixed;
   inset: 0;
-  top: 84px;
+  top: 84px; /* SearchBar height: 36px + 38px + padding */
   z-index: 100;
 }
 
@@ -224,85 +300,66 @@ async function handleExport(format) {
 }
 
 .live .dot {
+  /* Fixed: added space */
   width: 6px;
   height: 6px;
   background: #22c55e;
   border-radius: 50%;
 }
 
-
 /* ================= MOBILE ================= */
 @media (max-width: 768px) {
-  .dashboard {
-    padding: 10px;
+
+  *{
+    box-sizing:border-box;
   }
 
-  /* Cards stack */
-  .dashboard-card-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
+  .page-root{
+    width:100%;
+    overflow-x:hidden;
   }
 
-  .charts-row {
-    flex-direction: column;
-    gap: 15px;
-    padding: 0 10px;
+  .dashboard{
+    padding:10px;
   }
 
-  .charts-row > * {
-    width: 100%;
-    min-width: 0;
+  .charts-row,
+  .bottom-row{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+    padding:10px;
   }
 
- 
-  .bottom-row {
-    flex-direction: column;
-    gap: 15px;
-    padding: 0 10px 20px;
+  .charts-row>*,
+  .bottom-row>*{
+    width:100%;
+    min-width:0;
+    flex:none;
   }
 
-  .bottom-row > * {
-    width: 100%;
-    min-width: 0;
+  .main-layout{
+    display:block;
+    width:100%;
   }
 
- 
-  .main-layout {
-    flex-direction: column;
+  .app-root{
+    overflow-x:hidden;
   }
 
-  .footer {
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    height: auto;
-    gap: 6px;
-    padding: 10px;
-    font-size: 10px;
+  .footer{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+    height:auto;
+    padding:10px;
   }
 
-  .footer-left {
-    flex-wrap: wrap;
-    gap: 8px;
+  img,
+  canvas{
+    max-width:100%;
+    height:auto;
   }
 
-  /* Search/filter overlay */
-  .collection-filter-wrapper {
-    top: 70px;
-  }
-
-  /* Prevent tables/charts overflowing */
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  canvas {
-    max-width: 100%;
-  }
 }
-
-
 </style>

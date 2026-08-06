@@ -20,10 +20,32 @@
           </select>
         </div>
         <div class="filter-section">
-          <label class="label">CATEGORY</label>
+          <label class="label">SOURCES</label>
           <div class="category-list">
             <div v-for="cat in categories" :key="cat" class="cat-item" :class="{ active: category === cat }" @click="emit('update:category', cat)">{{ cat }}</div>
           </div>
+        </div>
+        <div class="filter-section">
+          <label class="label">STATUS</label
+            ><label v-for="s in statusOptions" :key="s" class="check"
+            ><input
+              type="checkbox"
+              :checked="status.includes(s)"
+              @change="toggleStatus(s)"
+            />
+            {{ s }}</label
+          >
+        </div>
+        <div class="filter-section">
+          <label class="label">PRIORITY</label
+            ><label v-for="p in priorityOptions" :key="p" class="check"
+            ><input
+              type="checkbox"
+              :checked="priority.includes(p)"
+              @change="togglePriority(p)"
+            />
+            {{ p }}</label
+          >
         </div>
         <div class="filter-section">
           <div class="filter-actions">
