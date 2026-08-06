@@ -20,31 +20,69 @@
 
     <!-- ==================== COLLECTION (SECOND, SAME PAGE) ==================== -->
     <div class="app-root">
-      <SearchBar :count="filteredCount" :flagged-total="flaggedTotal" :flagged-only="flaggedOnly" :sync-time="syncTime"
-        :search="searchQuery" :sort="sortBy" :show-filters="showFilters" :has-active-filters="hasActiveFilters"
-        :sources-count="uniqueSources" @update:search="searchQuery = $event" @update:sort="sortBy = $event"
-        @toggle-filters="showFilters = !showFilters" @toggle-flagged="flaggedOnly = !flaggedOnly" @clear="clearAll"
-        @export="handleExport" />
+      <SearchBar
+        :count="filteredCount"
+        :flagged-total="flaggedTotal"
+        :flagged-only="flaggedOnly"
+        :sync-time="syncTime"
+        :search="searchQuery"
+        :sort="sortBy"
+        :show-filters="showFilters"
+        :has-active-filters="hasActiveFilters"
+        :sources-count="uniqueSources"
+        @update:search="searchQuery = $event"
+        @update:sort="sortBy = $event"
+        @toggle-filters="showFilters = !showFilters"
+        @toggle-flagged="flaggedOnly = !flaggedOnly"
+        @clear="clearAll"
+        @export="handleExport"
+      />
 
       <div class="main-layout">
         <!-- FIX: renamed class to avoid collision with FilterBar's own .filter-overlay -->
-        <div v-if="showFilters" class="collection-filter-wrapper" @click.self="showFilters = false">
-          <FilterBar :is-open="showFilters" :search="searchQuery" :sort="sortBy" :category="selectedCategory"
-            :status="selectedStatus" :priority="selectedPriority" @update:search="searchQuery = $event"
-            @update:sort="sortBy = $event" @update:category="selectedCategory = $event"
-            @update:status="selectedStatus = $event" @update:priority="selectedPriority = $event"
-            @close="showFilters = false" @clear="clearAll" />
+        <div
+          v-if="showFilters"
+          class="collection-filter-wrapper"
+          @click.self="showFilters = false"
+        >
+          <FilterBar
+            :is-open="showFilters"
+            :search="searchQuery"
+            :sort="sortBy"
+            :category="selectedCategory"
+            :status="selectedStatus"
+            :priority="selectedPriority"
+            @update:search="searchQuery = $event"
+            @update:sort="sortBy = $event"
+            @update:category="selectedCategory = $event"
+            @update:status="selectedStatus = $event"
+            @update:priority="selectedPriority = $event"
+            @close="showFilters = false"
+            @clear="clearAll"
+          />
         </div>
 
-        <ArticleGrid :search="searchQuery" :sort="sortBy" :category="selectedCategory" :status="selectedStatus"
-          :priority="selectedPriority" :flagged-only="flaggedOnly" @update:count="handleCountUpdate"
-          @search-tag="searchQuery = $event" />
+        <ArticleGrid
+          :search="searchQuery"
+          :sort="sortBy"
+          :category="selectedCategory"
+          :status="selectedStatus"
+          :priority="selectedPriority"
+          :flagged-only="flaggedOnly"
+          @update:count="handleCountUpdate"
+          @search-tag="searchQuery = $event"
+        />
       </div>
 
       <div class="footer">
         <div class="footer-left">
-          <span class="live"><span class="dot"></span>LIVE COLLECTION ACTIVE</span>
-          <span>{{ filteredCount }} articles • {{ uniqueSources }} sources • {{ flaggedCount }} flagged</span>
+          <span class="live"
+            ><span class="dot"></span>LIVE COLLECTION ACTIVE</span
+          >
+          <span
+            >{{ filteredCount }} articles • {{ uniqueSources }} sources •
+            {{ flaggedCount }} flagged</span
+          >
         </div>
         <div>Miscellaneous v0.4.1 © 2026</div>
       </div>
@@ -86,7 +124,7 @@ const hasActiveFilters = computed(
     selectedStatus.value.length > 0 ||
     selectedPriority.value.length > 0 ||
     flaggedOnly.value ||
-    searchQuery.value.trim().length > 0
+    searchQuery.value.trim().length > 0,
 );
 
 function handleCountUpdate(payload: any) {
@@ -96,7 +134,8 @@ function handleCountUpdate(payload: any) {
     filteredCount.value = payload.count ?? filteredCount.value;
     flaggedCount.value = payload.flagged ?? flaggedCount.value;
     uniqueSources.value = payload.sources ?? uniqueSources.value;
-    if (payload.totalFlagged !== undefined) flaggedTotal.value = payload.totalFlagged;
+    if (payload.totalFlagged !== undefined)
+      flaggedTotal.value = payload.totalFlagged;
   }
 }
 
@@ -117,12 +156,16 @@ async function handleExport(format) {
   let blob;
   if (format === "csv") {
     const header = Object.keys(articles[0]).join(",");
-    const rows = articles.map(a =>
-      Object.values(a).map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")
+    const rows = articles.map((a) =>
+      Object.values(a)
+        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+        .join(","),
     );
     blob = new Blob([header + "\n" + rows.join("\n")], { type: "text/csv" });
   } else {
-    blob = new Blob([JSON.stringify(articles, null, 2)], { type: "application/json" });
+    blob = new Blob([JSON.stringify(articles, null, 2)], {
+      type: "application/json",
+    });
   }
 
   const url = URL.createObjectURL(blob);
@@ -158,7 +201,7 @@ async function handleExport(format) {
   flex-wrap: wrap;
 }
 
-.charts-row>* {
+.charts-row > * {
   flex: 1;
 }
 
@@ -169,7 +212,7 @@ async function handleExport(format) {
   flex-wrap: wrap;
 }
 
-.bottom-row>* {
+.bottom-row > * {
   flex: 1;
 }
 
@@ -230,7 +273,6 @@ async function handleExport(format) {
   border-radius: 50%;
 }
 
-
 /* ================= MOBILE ================= */
 @media (max-width: 768px) {
   .dashboard {
@@ -255,7 +297,6 @@ async function handleExport(format) {
     min-width: 0;
   }
 
- 
   .bottom-row {
     flex-direction: column;
     gap: 15px;
@@ -267,7 +308,6 @@ async function handleExport(format) {
     min-width: 0;
   }
 
- 
   .main-layout {
     flex-direction: column;
   }
@@ -303,6 +343,4 @@ async function handleExport(format) {
     max-width: 100%;
   }
 }
-
-
 </style>
