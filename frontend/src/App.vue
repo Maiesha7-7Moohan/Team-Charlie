@@ -109,28 +109,24 @@ function clearAll() {
   showFilters.value = false;
 }
 async function handleExport(format) {
-  const { data } = await api.get("/items");
-  const articles = data.items;
+  try {
+    const response = await api.get(`/items/export?format=${format}`, {
+      responseType: "blob",
+    });
 
-  if (!articles || articles.length === 0) return;
+    const blob = new Blob([response.data], {
+      type: format === "csv" ? "text/csv" : "application/json",
+    });
 
-  let blob;
-  if (format === "csv") {
-    const header = Object.keys(articles[0]).join(",");
-    const rows = articles.map(a =>
-      Object.values(a).map(v => `"${String(v).replace(/"/g, '""')}"`).join(",")
-    );
-    blob = new Blob([header + "\n" + rows.join("\n")], { type: "text/csv" });
-  } else {
-    blob = new Blob([JSON.stringify(articles, null, 2)], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `articles.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Export failed:", err);
   }
-
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `articles.${format}`;
-  a.click();
-  URL.revokeObjectURL(url);
 }
 </script>
 

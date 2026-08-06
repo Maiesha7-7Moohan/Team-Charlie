@@ -63,7 +63,7 @@ const emit = defineEmits(["update:search", "update:sort", "toggle-filters", "tog
 .flagged-btn { color: #111; cursor: pointer; opacity: 0.8; background: #facc15; border: 1px solid #111; padding: 2px 6px; font-weight: 700; }
 .flagged-btn.active { background: #ef4444; color: #fff; }
 .muted { color: #aaa; }
-.header-right { gap: 16px; font-size: 9px; color: #999; text-transform: uppercase; }
+.header-right { gap: 20px; font-size: 9px; color: #999; text-transform: uppercase; }
 .live-dot { display: flex; align-items: center; gap: 5px; }
 .dot { width: 8px; height: 8px; background: #22c55e; border: 1px solid #111; }
 .search-bar { padding: 14px 16px; display: flex; gap: 12px; align-items: center; background: #fefefd; width: 100%; }
@@ -76,4 +76,5 @@ const emit = defineEmits(["update:search", "update:sort", "toggle-filters", "tog
 .btn-black { background: #111; color: #fff; font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 600; padding: 0 22px; border: none; cursor: pointer; border-left: 4px solid #ff5a1f; flex-shrink: 0; }
 .search-actions { display: flex; gap: 8px; align-items: center; flex-shrink: 0; }
 .btn-clear { height: 38px; padding: 0 10px; border: 1.5px solid #111; background: #facc15; font-family: "IBM Plex Mono", monospace; font-size: 10px; font-weight: 700; cursor: pointer; }
+.link { color: #111; cursor: pointer; opacity: 0.8; background: #facc15; border: 1px solid #111; padding: 7px; font-weight: 700;}
 </style>
