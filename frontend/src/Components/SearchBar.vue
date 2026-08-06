@@ -182,6 +182,8 @@ function emitFilterChange() {
   z-index: 60;
   background: #fefefd;
   border-bottom: 1px solid #111;
+  width: 100%;
+  overflow-x: hidden;
 }
 .top-header {
   height: 36px;

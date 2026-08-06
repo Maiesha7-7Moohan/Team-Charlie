@@ -228,25 +228,25 @@ async function handleExport(format: string) {
 .charts-row {
   display: flex;
   gap: 20px;
-  padding: 0 20px;
-  flex-wrap: wrap;
+  padding: 20px;
+  align-items: stretch;
 }
 
 .charts-row > * {
-  flex: 1;
-  min-width: 300px;
+  flex: 1 1 50%;
+  min-width: 450px;
 }
 
 .bottom-row {
   display: flex;
   gap: 20px;
-  padding: 0 20px 20px 20px;
-  flex-wrap: wrap;
+  padding: 20px;
+  align-items: stretch;
 }
 
 .bottom-row > * {
-  flex: 1;
-  min-width: 300px;
+  flex: 1 1 33.333%;
+  min-width: 380px;
 }
 
 .app-root {
@@ -309,63 +309,57 @@ async function handleExport(format: string) {
 
 /* ================= MOBILE ================= */
 @media (max-width: 768px) {
-  .dashboard {
-    padding: 10px;
+
+  *{
+    box-sizing:border-box;
   }
 
-  .charts-row {
-    flex-direction: column;
-    gap: 15px;
-    padding: 0 10px;
+  .page-root{
+    width:100%;
+    overflow-x:hidden;
   }
 
-  .charts-row > * {
-    width: 100%;
-    min-width: 0;
+  .dashboard{
+    padding:10px;
   }
 
-  .bottom-row {
-    flex-direction: column;
-    gap: 15px;
-    padding: 0 10px 20px;
+  .charts-row,
+  .bottom-row{
+    display:flex;
+    flex-direction:column;
+    gap:15px;
+    padding:10px;
   }
 
-  .bottom-row > * {
-    width: 100%;
-    min-width: 0;
+  .charts-row>*,
+  .bottom-row>*{
+    width:100%;
+    min-width:0;
+    flex:none;
   }
 
-  .main-layout {
-    flex-direction: column;
+  .main-layout{
+    display:block;
+    width:100%;
   }
 
-  .footer {
-    flex-direction: column;
-    justify-content: center;
-    align-items: flex-start;
-    height: auto;
-    gap: 6px;
-    padding: 10px;
-    font-size: 10px;
+  .app-root{
+    overflow-x:hidden;
   }
 
-  .footer-left {
-    flex-wrap: wrap;
-    gap: 8px;
+  .footer{
+    flex-direction:column;
+    align-items:flex-start;
+    gap:8px;
+    height:auto;
+    padding:10px;
   }
 
-  .collection-filter-wrapper {
-    top: 70px; /* Slightly less on mobile */
+  img,
+  canvas{
+    max-width:100%;
+    height:auto;
   }
 
-  table {
-    display: block;
-    overflow-x: auto;
-    white-space: nowrap;
-  }
-
-  canvas {
-    max-width: 100%;
-  }
 }
 </style>
