@@ -1285,4 +1285,154 @@ defineExpose({ fetchArticles, loading, error });
 .btn-clear-search:active {
   background: #000;
 }
+
+/* ==========================================
+   RESPONSIVE FIXES
+========================================== */
+
+*,
+*::before,
+*::after{
+    box-sizing:border-box;
+}
+
+html,
+body{
+    width:100%;
+    overflow-x:hidden;
+}
+
+.grid-wrapper{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+}
+
+.cluster-section{
+    width:100%;
+}
+
+.graph-canvas{
+    width:100%;
+    height:460px;
+}
+
+canvas{
+    display:block;
+    max-width:100%;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:16px;
+    width:100%;
+}
+
+.card{
+    width:100%;
+    min-width:0;
+}
+
+/* ---------- Laptop ---------- */
+
+@media (max-width:1400px){
+
+    .grid{
+        grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    }
+
+}
+
+/* ---------- Tablet ---------- */
+
+@media (max-width:1100px){
+
+    .cluster-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .legend{
+        width:100%;
+        justify-content:flex-start;
+    }
+
+    .graph-canvas{
+        height:400px;
+    }
+
+    .grid{
+        grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    }
+
+}
+
+/* ---------- Small Tablet ---------- */
+
+@media (max-width:900px){
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .graph-canvas{
+        height:350px;
+    }
+
+}
+
+/* ---------- Phone ---------- */
+
+@media (max-width:768px){
+
+    .grid-wrapper{
+        padding:10px;
+    }
+
+    .cluster-header{
+        padding:12px;
+    }
+
+    .legend{
+        gap:8px;
+        font-size:7px;
+    }
+
+    .graph-canvas{
+        height:300px;
+    }
+
+    .zoom-controls{
+        top:8px;
+        right:8px;
+    }
+
+    .modal-content{
+        max-width:100%;
+    }
+
+}
+
+/* ---------- Small Phones ---------- */
+
+@media (max-width:480px){
+
+    .graph-canvas{
+        height:240px;
+    }
+
+    .card{
+        padding:12px;
+    }
+
+    .card-title{
+        font-size:12px;
+    }
+
+    .card-summary{
+        font-size:10px;
+    }
+
+}
 </style>
