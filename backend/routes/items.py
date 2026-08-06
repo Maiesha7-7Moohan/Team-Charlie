@@ -3,10 +3,10 @@
 import os
 import json
 
-  
-from flask import Blueprint, jsonify, request, current_app 
+from flask import Blueprint, jsonify, request, current_app
 
 items_bp = Blueprint("items", __name__, url_prefix="/api/items")
+
 
 @items_bp.route("", methods=["GET"])
 def get_items():
@@ -19,6 +19,10 @@ def get_items():
 
     with open(data_file, "r", encoding="utf-8") as file:
         articles = json.load(file)
+    
+    for index, article in enumerate(articles, start=1):
+        article.setdefault("id", index)
+        
 
     page = request.args.get("page", default=1, type=int)
     limit = request.args.get("limit", default=20, type=int)
@@ -32,8 +36,9 @@ def get_items():
         "items": articles[start:end]
     }), 200
 
+
 @items_bp.route("/<int:item_id>", methods=["GET"])
-def get_item(item_id):  
+def get_item(item_id):
 
     data_file = os.path.join(
         current_app.root_path,
@@ -44,9 +49,12 @@ def get_item(item_id):
 
     with open(data_file, "r", encoding="utf-8") as file:
         articles = json.load(file)
+        
+    for index, article in enumerate(articles, start=1):
+        article.setdefault("id", index)
 
     for article in articles:
-        if article["id"] == item_id:
+        if article.get("id") == item_id:
             return jsonify(article), 200
 
     return jsonify({"error": "Article not found"}), 404
@@ -61,6 +69,7 @@ def create_item():
         "cleaned",
         "articles_cleaned.json"
     )
+
     payload = request.get_json(silent=True)
 
     if payload is None:
@@ -68,9 +77,18 @@ def create_item():
             "error": "Request body must be valid JSON."
         }), 400
 
-    required_fields = ["title", "author", "source", "date", "summary"]
-    missing_fields = [field for field in required_fields if not payload.get(field)]
+    required_fields = [
+        "title",
+        "description",
+        "author",
+        "published",
+        "source"
+    ]
 
+    missing_fields = [
+        field for field in required_fields
+        if not payload.get(field)
+    ]
 
     if missing_fields:
         return jsonify({
@@ -80,21 +98,26 @@ def create_item():
 
     with open(data_file, "r", encoding="utf-8") as file:
         articles = json.load(file)
- 
+        
+    for index, article in enumerate(articles, start=1):
+        article.setdefault("id", index)
+
     highest_id = 0
 
     for article in articles:
-        if article.get("id", 0) > highest_id:
-            highest_id = article["id"]
+        highest_id = max(highest_id, article.get("id", 0))
 
-    new_id = highest_id + 1
     new_article = {
-        "id": new_id,
+        "id": highest_id + 1,
         "title": payload["title"],
+        "description": payload["description"],
         "author": payload["author"],
+        "published": payload["published"],
         "source": payload["source"],
-        "summary": payload["summary"],
-        "date": payload["date"]
+        "category": payload.get("category", ""),
+        "image_url": payload.get("image_url", ""),
+        "article": payload.get("article", ""),
+        "link": payload.get("link", "")
     }
 
     articles.append(new_article)
@@ -104,6 +127,7 @@ def create_item():
         file.write("\n")
 
     return jsonify(new_article), 201
+
 
 @items_bp.route("/<int:item_id>", methods=["PUT"])
 def update_item(item_id):
@@ -122,8 +146,18 @@ def update_item(item_id):
             "error": "Request body must be valid JSON."
         }), 400
 
-    required_fields = ["title", "author", "source", "date", "summary"]
-    missing_fields = [field for field in required_fields if not payload.get(field)]
+    required_fields = [
+        "title",
+        "description",
+        "author",
+        "published",
+        "source"
+    ]
+
+    missing_fields = [
+        field for field in required_fields
+        if not payload.get(field)
+    ]
 
     if missing_fields:
         return jsonify({
@@ -133,15 +167,38 @@ def update_item(item_id):
 
     with open(data_file, "r", encoding="utf-8") as file:
         articles = json.load(file)
+        
+    for index, article in enumerate(articles, start=1):
+        article.setdefault("id", index)
 
     for article in articles:
-        if article["id"] == item_id:
+        if article.get("id") == item_id:
 
             article["title"] = payload["title"]
+            article["description"] = payload["description"]
             article["author"] = payload["author"]
+            article["published"] = payload["published"]
             article["source"] = payload["source"]
-            article["date"] = payload["date"]
-            article["summary"] = payload["summary"]
+
+            article["category"] = payload.get(
+                "category",
+                article.get("category", "")
+            )
+
+            article["image_url"] = payload.get(
+                "image_url",
+                article.get("image_url", "")
+            )
+
+            article["article"] = payload.get(
+                "article",
+                article.get("article", "")
+            )
+
+            article["link"] = payload.get(
+                "link",
+                article.get("link", "")
+            )
 
             with open(data_file, "w", encoding="utf-8") as file:
                 json.dump(articles, file, indent=2, ensure_ascii=False)
@@ -152,6 +209,7 @@ def update_item(item_id):
     return jsonify({
         "error": "Article not found."
     }), 404
+
 
 @items_bp.route("/<int:item_id>", methods=["DELETE"])
 def delete_item(item_id):
@@ -166,13 +224,17 @@ def delete_item(item_id):
     with open(data_file, "r", encoding="utf-8") as file:
         articles = json.load(file)
 
+    for index, article in enumerate(articles, start=1):
+        article.setdefault("id", index)
+
     for article in articles:
-        if article["id"] == item_id:
+        if article.get("id") == item_id:
 
             articles.remove(article)
 
             with open(data_file, "w", encoding="utf-8") as file:
                 json.dump(articles, file, indent=2, ensure_ascii=False)
+                file.write("\n")
 
             return jsonify({
                 "message": "Article deleted successfully."

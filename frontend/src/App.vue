@@ -22,24 +22,22 @@
     <div class="app-root">
       <SearchBar
         :count="filteredCount"
-        :flagged-total="flaggedTotal"
-        :flagged-only="flaggedOnly"
+        :bookmarked-total="bookmarkedTotal"
+        :bookmarked-only="bookmarkedOnly"
         :sync-time="syncTime"
         :search="searchQuery"
-        :sort="sortBy"
         :show-filters="showFilters"
         :has-active-filters="hasActiveFilters"
         :sources-count="uniqueSources"
         @update:search="searchQuery = $event"
-        @update:sort="sortBy = $event"
+        @update:bookmarked-only="bookmarkedOnly = $event"
         @toggle-filters="showFilters = !showFilters"
-        @toggle-flagged="flaggedOnly = !flaggedOnly"
         @clear="clearAll"
         @export="handleExport"
+        @filter-change="handleFilterChange"
       />
 
       <div class="main-layout">
-        <!-- FIX: renamed class to avoid collision with FilterBar's own .filter-overlay -->
         <div
           v-if="showFilters"
           class="collection-filter-wrapper"
@@ -68,7 +66,7 @@
           :category="selectedCategory"
           :status="selectedStatus"
           :priority="selectedPriority"
-          :flagged-only="flaggedOnly"
+          :bookmarked-only="bookmarkedOnly"
           @update:count="handleCountUpdate"
           @search-tag="searchQuery = $event"
         />
@@ -76,13 +74,13 @@
 
       <div class="footer">
         <div class="footer-left">
-          <span class="live"
-            ><span class="dot"></span>LIVE COLLECTION ACTIVE</span
-          >
-          <span
-            >{{ filteredCount }} articles • {{ uniqueSources }} sources •
-            {{ flaggedCount }} flagged</span
-          >
+          <span class="live">
+            <span class="dot"></span>LIVE COLLECTION ACTIVE
+          </span>
+          <span>
+            {{ filteredCount }} articles • {{ uniqueSources }} sources •
+            {{ bookmarkedCount }} bookmarked
+          </span>
         </div>
         <div>Miscellaneous v0.4.1 © 2026</div>
       </div>
@@ -104,39 +102,54 @@ import Insights from "./Components/Insights.vue";
 import ProvinceTable from "./Components/ProvinceTable.vue";
 import FilterBar from "./Components/FilterBar.vue";
 
+interface CountPayload {
+  count?: number;
+  bookmarked?: number;
+  sources?: number;
+  totalBookmarked?: number;
+}
+
 const showFilters = ref(false);
 const searchQuery = ref("");
 const sortBy = ref("newest");
 const selectedCategory = ref("All Sources");
 const selectedStatus = ref<string[]>([]);
 const selectedPriority = ref<string[]>([]);
-const flaggedOnly = ref(false);
+const bookmarkedOnly = ref(false);
 const syncTime = ref("09:22");
 
 const filteredCount = ref(8);
-const flaggedCount = ref(3);
+const bookmarkedCount = ref(3);
 const uniqueSources = ref(8);
-const flaggedTotal = ref(3);
+const bookmarkedTotal = ref(3);
 
 const hasActiveFilters = computed(
   () =>
     selectedCategory.value !== "All Sources" ||
     selectedStatus.value.length > 0 ||
     selectedPriority.value.length > 0 ||
-    flaggedOnly.value ||
+    bookmarkedOnly.value ||
     searchQuery.value.trim().length > 0,
 );
 
-function handleCountUpdate(payload: any) {
+function handleCountUpdate(payload: number | CountPayload) {
   if (typeof payload === "number") {
     filteredCount.value = payload;
   } else if (payload && typeof payload === "object") {
     filteredCount.value = payload.count ?? filteredCount.value;
-    flaggedCount.value = payload.flagged ?? flaggedCount.value;
+    bookmarkedCount.value = payload.bookmarked ?? bookmarkedCount.value;
     uniqueSources.value = payload.sources ?? uniqueSources.value;
-    if (payload.totalFlagged !== undefined)
-      flaggedTotal.value = payload.totalFlagged;
+    if (payload.totalBookmarked !== undefined)
+      bookmarkedTotal.value = payload.totalBookmarked;
   }
+}
+
+function handleFilterChange(payload: {
+  search: string;
+  bookmarkedOnly: boolean;
+}) {
+  searchQuery.value = payload.search;
+  bookmarkedOnly.value = payload.bookmarkedOnly;
 }
 
 function clearAll() {
@@ -144,36 +157,54 @@ function clearAll() {
   selectedCategory.value = "All Sources";
   selectedStatus.value = [];
   selectedPriority.value = [];
-  flaggedOnly.value = false;
+  bookmarkedOnly.value = false;
   showFilters.value = false;
 }
-async function handleExport(format) {
-  const { data } = await api.get("/items");
-  const articles = data.items;
 
-  if (!articles || articles.length === 0) return;
-
-  let blob;
-  if (format === "csv") {
-    const header = Object.keys(articles[0]).join(",");
-    const rows = articles.map((a) =>
-      Object.values(a)
-        .map((v) => `"${String(v).replace(/"/g, '""')}"`)
-        .join(","),
-    );
-    blob = new Blob([header + "\n" + rows.join("\n")], { type: "text/csv" });
-  } else {
-    blob = new Blob([JSON.stringify(articles, null, 2)], {
-      type: "application/json",
+async function handleExport(format: string) {
+  try {
+    // Pass current filters to API so export matches what's filtered
+    const params = new URLSearchParams({
+      search: searchQuery.value,
+      sort: sortBy.value,
+      category: selectedCategory.value,
+      bookmarkedOnly: String(bookmarkedOnly.value),
     });
-  }
 
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = `articles.${format}`;
-  a.click();
-  URL.revokeObjectURL(url);
+    if (selectedStatus.value.length)
+      params.append("status", selectedStatus.value.join(","));
+    if (selectedPriority.value.length)
+      params.append("priority", selectedPriority.value.join(","));
+
+    const { data } = await api.get(`/items?${params.toString()}`);
+    const articles = data.items;
+
+    if (!articles || articles.length === 0) return;
+
+    let blob: Blob;
+    if (format === "csv") {
+      const header = Object.keys(articles[0]).join(",");
+      const rows = articles.map((a: Record<string, unknown>) =>
+        Object.values(a)
+          .map((v) => `"${String(v).replace(/"/g, '""')}"`)
+          .join(","),
+      );
+      blob = new Blob([header + "\n" + rows.join("\n")], { type: "text/csv" });
+    } else {
+      blob = new Blob([JSON.stringify(articles, null, 2)], {
+        type: "application/json",
+      });
+    }
+
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `articles.${format}`;
+    a.click();
+    URL.revokeObjectURL(url);
+  } catch (err) {
+    console.error("Export failed:", err);
+  }
 }
 </script>
 
@@ -203,6 +234,7 @@ async function handleExport(format) {
 
 .charts-row > * {
   flex: 1;
+  min-width: 300px;
 }
 
 .bottom-row {
@@ -214,6 +246,7 @@ async function handleExport(format) {
 
 .bottom-row > * {
   flex: 1;
+  min-width: 300px;
 }
 
 .app-root {
@@ -235,7 +268,7 @@ async function handleExport(format) {
 .collection-filter-wrapper {
   position: fixed;
   inset: 0;
-  top: 84px;
+  top: 84px; /* SearchBar height: 36px + 38px + padding */
   z-index: 100;
 }
 
@@ -267,6 +300,7 @@ async function handleExport(format) {
 }
 
 .live .dot {
+  /* Fixed: added space */
   width: 6px;
   height: 6px;
   background: #22c55e;
@@ -277,13 +311,6 @@ async function handleExport(format) {
 @media (max-width: 768px) {
   .dashboard {
     padding: 10px;
-  }
-
-  /* Cards stack */
-  .dashboard-card-container {
-    display: flex;
-    flex-direction: column;
-    gap: 15px;
   }
 
   .charts-row {
@@ -327,12 +354,10 @@ async function handleExport(format) {
     gap: 8px;
   }
 
-  /* Search/filter overlay */
   .collection-filter-wrapper {
-    top: 70px;
+    top: 70px; /* Slightly less on mobile */
   }
 
-  /* Prevent tables/charts overflowing */
   table {
     display: block;
     overflow-x: auto;
