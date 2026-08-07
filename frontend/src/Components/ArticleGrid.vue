@@ -36,32 +36,22 @@
         </div>
       </div>
     </div>
-
     <div v-if="loading" class="loading-state">Loading articles...</div>
     <div v-else-if="error" class="error-state">{{ error }}</div>
-
     <div v-else-if="filteredArticles.length === 0" class="empty-state">
       <div class="empty-icon">∅</div>
       <div class="empty-title">NO RESULTS FOUND</div>
       <div class="empty-message">
-        <span v-if="props.search">
-          No articles match "<b>{{ props.search }}</b
-          >"
-        </span>
-        <span v-else-if="activeFilters.length > 0">
-          No articles match the current filters
-        </span>
-        <span v-else> No articles available </span>
+        <span v-if="props.search"
+          >No articles match "<b>{{ props.search }}</b
+          >"</span
+        >
+        <span v-else-if="activeFilters.length > 0"
+          >No articles match the current filters</span
+        >
+        <span v-else>No articles available</span>
       </div>
-      <button
-        v-if="props.search || activeFilters.length > 0"
-        class="btn-clear-search"
-        @click="clearAllFilters"
-      >
-        CLEAR FILTERS
-      </button>
     </div>
-
     <div v-else class="grid">
       <div
         v-for="a in filteredArticles"
@@ -100,7 +90,6 @@
         </div>
       </div>
     </div>
-
     <div v-if="selected" class="modal" @click.self="selected = null">
       <div class="modal-content">
         <div class="modal-head">
@@ -158,7 +147,6 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import api from "../services/api";
 
-// after
 const props = defineProps({
   search: String,
   sort: String,
@@ -182,7 +170,7 @@ const error = ref(null);
 const canvasContainer = ref(null);
 const stats = ref({ total: 0, sites: 0, kw: 0 });
 const activeFilters = ref([]);
-const bookmarkedIds = ref(new Set()); // persistent bookmark IDs
+const bookmarkedIds = ref(new Set());
 let scene,
   camera,
   renderer,
@@ -192,6 +180,7 @@ let scene,
   raycaster,
   mouse,
   controls;
+
 const group1Palette = [
   "#ff5a1f",
   "#2d5bff",
@@ -202,26 +191,19 @@ const group1Palette = [
   "#06b6d4",
   "#111",
 ];
-
 const STORAGE_KEY = "article_bookmarks_v1";
 
 function loadBookmarks() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (raw) bookmarkedIds.value = new Set(JSON.parse(raw));
-  } catch (e) {
-    console.warn("Failed to load bookmarks:", e);
-  }
+  } catch {}
 }
-
 function saveBookmarks() {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify([...bookmarkedIds.value]));
-  } catch (e) {
-    console.warn("Failed to save bookmarks:", e);
-  }
+  } catch {}
 }
-
 function toggleBookmark(article) {
   if (bookmarkedIds.value.has(article.id)) {
     bookmarkedIds.value.delete(article.id);
@@ -231,21 +213,17 @@ function toggleBookmark(article) {
     article.bookmarked = true;
   }
   saveBookmarks();
-  // Force reactivity
   articles.value = [...articles.value];
 }
-
 async function getArticles() {
   const { data } = await api.get("/items?limit=1000");
   return data.items;
 }
-
 function getArticleUrl(a) {
   return a ? a.url || a.link || a.href || null : null;
 }
 function normalizeArticle(raw, index) {
   const content = raw.article || raw.description || "";
-
   const categoryColors = {
     MARKETS: "#ff5a1f",
     AI: "#2d5bff",
@@ -256,14 +234,12 @@ function normalizeArticle(raw, index) {
     BUSINESS: "#06b6d4",
     SPORTS: "#111",
   };
-
   const category = (raw.category || "WIRE").toUpperCase();
   const color =
     categoryColors[category] || group1Palette[index % group1Palette.length];
   const isDark = ["#111", "#2D5BFF", "#7C3AED", "#EF4444"].includes(
     color.toUpperCase(),
   );
-
   const keywordSource =
     raw.keywords || raw.tags || raw.topics || raw.category || [];
   const keywords = Array.isArray(keywordSource)
@@ -271,7 +247,6 @@ function normalizeArticle(raw, index) {
     : typeof keywordSource === "string"
       ? keywordSource.split(",").map((k) => k.trim())
       : [];
-
   const id = raw.id ?? raw.link ?? index;
   return {
     id,
@@ -283,17 +258,15 @@ function normalizeArticle(raw, index) {
     summary:
       raw.description ||
       content.slice(0, 180) + (content.length > 180 ? "..." : ""),
-    tags: keywords.filter(Boolean).map((t) => {
-      return {
-        t: t.toUpperCase(),
-        s: `background:#2d5bff;color:#111;border:1px solid #111;`,
-      };
-    }),
+    tags: keywords.filter(Boolean).map((t) => ({
+      t: t.toUpperCase(),
+      s: `background:#2d5bff;color:#111;border:1px solid #111;`,
+    })),
     relevance: raw.relevance ?? 82,
     words: content ? content.split(/\s+/).length : 0,
     collected: raw.published || "",
     collection: raw.source || "SCRAPED",
-    bookmarked: bookmarkedIds.value.has(id), // load from localStorage
+    bookmarked: bookmarkedIds.value.has(id),
     color,
     category: raw.category || "All Sources",
     status: raw.status || "Active",
@@ -307,44 +280,35 @@ function buildClusterFromList(list) {
   const sites = new Map(),
     kws = new Map();
   const links = [];
-
   list.forEach((a) => {
-    if (!sites.has(a.source)) {
+    if (!sites.has(a.source))
       sites.set(a.source, {
         id: `site_${a.source}`,
         label: a.source,
         type: "site",
         count: 0,
       });
-    }
     sites.get(a.source).count++;
-
     (a.tags || []).forEach((t) => {
       const label = (typeof t === "string" ? t : t.t).toUpperCase();
       const kwId = `kw_${label}`;
-      if (!kws.has(label)) {
+      if (!kws.has(label))
         kws.set(label, { id: kwId, label, type: "keyword", count: 0 });
-      }
       kws.get(label).count++;
       links.push({ source: `site_${a.source}`, target: kwId });
     });
   });
-
   let filteredNodes = [];
   let filteredLinks = links;
-
   if (activeFilters.value.length > 0) {
     const clickedSite = activeFilters.value.find((f) => f.type === "site");
-
     if (clickedSite) {
       const siteNode = sites.get(clickedSite.label);
       if (siteNode) {
         filteredNodes.push(siteNode);
         const connectedKwIds = new Set();
         links.forEach((l) => {
-          if (l.source === clickedSite.id) {
-            connectedKwIds.add(l.target);
-          }
+          if (l.source === clickedSite.id) connectedKwIds.add(l.target);
         });
         connectedKwIds.forEach((kwId) => {
           const kwLabel = kwId.split("_")[1];
@@ -360,11 +324,9 @@ function buildClusterFromList(list) {
       );
       const siteIds = new Set();
       const kwIds = new Set(keywordFilters.map((f) => f.id));
-
       links.forEach((l) => {
         if (kwIds.has(l.target)) siteIds.add(l.source);
       });
-
       filteredNodes = [
         ...[...sites.values()].filter((n) => siteIds.has(n.id)),
         ...[...kws.values()].filter((n) => kwIds.has(n.id)),
@@ -383,25 +345,22 @@ function buildClusterFromList(list) {
     );
     filteredNodes = [...sites.values(), ...topKws];
   }
-
-  const nodeSites = filteredNodes.filter((n) => n.type === "site").length;
-  const nodeKws = filteredNodes.filter((n) => n.type === "keyword").length;
-  stats.value = { total: filteredNodes.length, sites: nodeSites, kw: nodeKws };
-
+  stats.value = {
+    total: filteredNodes.length,
+    sites: filteredNodes.filter((n) => n.type === "site").length,
+    kw: filteredNodes.filter((n) => n.type === "keyword").length,
+  };
   return { nodes: filteredNodes, links: filteredLinks };
 }
-
 function handleNodeClick(event) {
   if (!renderer || !camera || !scene) return;
   const rect = renderer.domElement.getBoundingClientRect();
   mouse.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
   mouse.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
-
   raycaster.setFromCamera(mouse, camera);
   const intersects = raycaster.intersectObjects(
     graphGroup.children.filter((obj) => obj.type === "Mesh"),
   );
-
   if (intersects.length > 0) {
     const clickedNode = intersects[0].object.userData;
     const newFilter = {
@@ -415,23 +374,19 @@ function handleNodeClick(event) {
     }
   }
 }
-
 function removeFilter(index) {
   activeFilters.value.splice(index);
   initThree();
 }
-
 function resetDrillDown() {
   activeFilters.value = [];
   initThree();
 }
-
 function clearAllFilters() {
   activeFilters.value = [];
   emit("clear-search");
   initThree();
 }
-
 function zoomIn() {
   if (controls) {
     controls.dollyOut(1.2);
@@ -447,22 +402,16 @@ function zoomOut() {
 function resetView() {
   fitCameraToGroup();
 }
-
 function fitCameraToGroup() {
   if (!graphGroup || graphGroup.children.length === 0) return;
-
   const box = new THREE.Box3().setFromObject(graphGroup);
   const size = box.getSize(new THREE.Vector3());
   const center = box.getCenter(new THREE.Vector3());
-
   const maxDim = Math.max(size.x, size.y, size.z);
   const fov = camera.fov * (Math.PI / 180);
-  let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
-  cameraZ *= 1.3;
-
+  let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2)) * 1.3;
   camera.position.set(center.x, center.y, center.z + cameraZ);
   camera.lookAt(center);
-
   if (controls) {
     controls.target.copy(center);
     controls.update();
@@ -487,16 +436,12 @@ function initThree() {
   scene = new THREE.Scene();
   scene.background = new THREE.Color("#fefefd");
   scene.fog = new THREE.Fog("#fefefd", 42, 95);
-
   camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 1000);
   camera.position.set(0, 2, 38);
-
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(W, H);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x000000, 0);
-  renderer.domElement.style.cursor = "grab";
-  renderer.domElement.style.display = "block";
   const zoomCtrls = container.querySelector(".zoom-controls");
   container.insertBefore(renderer.domElement, zoomCtrls);
 
@@ -509,36 +454,29 @@ function initThree() {
   controls.autoRotate = false;
   controls.enableZoom = false;
 
-  renderer.domElement.addEventListener("mousedown", () => {
-    renderer.domElement.style.cursor = "grabbing";
-  });
-  renderer.domElement.addEventListener("mouseup", () => {
-    renderer.domElement.style.cursor = "grab";
-  });
-
   labelRenderer = new CSS2DRenderer();
   labelRenderer.setSize(W, H);
   labelRenderer.domElement.style.position = "absolute";
   labelRenderer.domElement.style.top = "0px";
+  labelRenderer.domElement.style.left = "0px";
   labelRenderer.domElement.style.pointerEvents = "none";
   labelRenderer.domElement.style.zIndex = "1";
   container.insertBefore(labelRenderer.domElement, zoomCtrls);
 
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
+
   renderer.domElement.addEventListener("click", handleNodeClick);
 
   scene.add(new THREE.AmbientLight(0xffffff, 0.9));
   const dl = new THREE.DirectionalLight(0xffffff, 0.35);
   dl.position.set(8, 12, 5);
   scene.add(dl);
-
   graphGroup = new THREE.Group();
   scene.add(graphGroup);
 
   const { nodes, links } = buildClusterFromList(filteredArticles.value);
   const nodeMap = new Map();
-
   const siteMat = new THREE.MeshStandardMaterial({
     color: 0xff5a1f,
     roughness: 0.4,
@@ -549,18 +487,14 @@ function initThree() {
     roughness: 0.5,
     metalness: 0.05,
   });
-
   const siteNodes = nodes.filter((n) => n.type === "site");
   const keywordNodes = nodes.filter((n) => n.type === "keyword");
-
   const meshes = [];
-
-  nodes.forEach((n, i) => {
+  nodes.forEach((n) => {
     const nodeRadius = n.type === "site" ? 1.6 : 0.6;
     const geo = new THREE.SphereGeometry(nodeRadius, 24, 24);
     const mat = n.type === "site" ? siteMat : kwMat;
     const mesh = new THREE.Mesh(geo, mat);
-
     let angle, r;
     if (n.type === "site") {
       const siteIndex = siteNodes.indexOf(n);
@@ -573,15 +507,12 @@ function initThree() {
       angle = t * Math.PI * 2 * 2.5;
       r = 20 + Math.random() * 8;
     }
-
     mesh.position.set(
       Math.cos(angle) * r + (Math.random() - 0.5) * 2,
       Math.sin(angle) * r + (Math.random() - 0.5) * 2,
       (Math.random() - 0.5) * 5,
     );
-
     mesh.userData = { ...n, nodeRadius };
-
     const labelDiv = document.createElement("div");
     labelDiv.className = "node-label";
     labelDiv.textContent = n.label;
@@ -596,12 +527,10 @@ function initThree() {
     const label = new CSS2DObject(labelDiv);
     label.position.set(0, nodeRadius + 0.8, 0);
     mesh.add(label);
-
     graphGroup.add(mesh);
     nodeMap.set(n.id, mesh);
     meshes.push(mesh);
   });
-
   const iterations = 50;
   const padding = 0.4;
   for (let iter = 0; iter < iterations; iter++) {
@@ -611,7 +540,6 @@ function initThree() {
         const b = meshes[j];
         const dist = a.position.distanceTo(b.position);
         const minDist = a.userData.nodeRadius + b.userData.nodeRadius + padding;
-
         if (dist < minDist && dist > 0.001) {
           const overlap = minDist - dist;
           const dir = new THREE.Vector3()
@@ -623,13 +551,11 @@ function initThree() {
       }
     }
   }
-
   const lineMat = new THREE.LineBasicMaterial({
     color: 0xe5e2de,
     transparent: true,
     opacity: 0.25,
   });
-
   links.forEach((l) => {
     const a = nodeMap.get(l.source),
       b = nodeMap.get(l.target);
@@ -641,9 +567,7 @@ function initThree() {
     const line = new THREE.Line(geo, lineMat);
     graphGroup.add(line);
   });
-
   fitCameraToGroup();
-
   const animate = () => {
     animationId = requestAnimationFrame(animate);
     controls.update();
@@ -651,7 +575,6 @@ function initThree() {
     labelRenderer.render(scene, camera);
   };
   animate();
-
   window.addEventListener("resize", () => {
     if (!canvasContainer.value) return;
     const w = canvasContainer.value.clientWidth;
@@ -665,7 +588,7 @@ function initThree() {
 const fetchArticles = async () => {
   loading.value = true;
   error.value = null;
-  loadBookmarks(); // load saved bookmarks first
+  loadBookmarks();
   try {
     const res = await getArticles();
     let rawList = Array.isArray(res)
@@ -682,8 +605,7 @@ const fetchArticles = async () => {
 };
 onMounted(fetchArticles);
 onBeforeUnmount(() => {
-  if (renderer)
-    renderer.domElement.removeEventListener("click", handleNodeClick);
+  renderer?.domElement?.removeEventListener("click", handleNodeClick);
   controls?.dispose();
   cancelAnimationFrame(animationId);
   renderer?.dispose();
@@ -698,7 +620,6 @@ const availableAuthors = computed(() => {
   const set = new Set(articles.value.map((a) => a.author).filter(Boolean));
   return [...set].sort();
 });
-
 watch(
   articles,
   () => {
@@ -709,7 +630,6 @@ watch(
   },
   { immediate: true },
 );
-
 const filteredArticles = computed(() => {
   let list = articles.value.filter((a) => {
     if (props.bookmarkedOnly && !a.bookmarked) return false;
@@ -728,7 +648,7 @@ const filteredArticles = computed(() => {
     if (props.dateTo) {
       const d = new Date(a.collected);
       const to = new Date(props.dateTo);
-      to.setHours(23, 59, 59, 999); // include the whole "to" day
+      to.setHours(23, 59, 59, 999);
       if (!isNaN(d) && !isNaN(to) && d > to) return false;
     }
     if (props.search) {
@@ -739,17 +659,15 @@ const filteredArticles = computed(() => {
     }
     return true;
   });
-
   if (activeFilters.value.length > 0) {
-    list = list.filter((a) => {
-      return activeFilters.value.every((f) => {
+    list = list.filter((a) =>
+      activeFilters.value.every((f) => {
         if (f.type === "site") return a.source === f.label;
         if (f.type === "keyword") return a.tags.some((t) => t.t === f.label);
         return true;
-      });
-    });
+      }),
+    );
   }
-
   if (props.sort === "relevance")
     list = [...list].sort((a, b) => b.relevance - a.relevance);
   else if (props.sort === "words")
@@ -762,7 +680,6 @@ const filteredArticles = computed(() => {
     });
   return list;
 });
-
 function openArticle(a) {
   selected.value = a;
 }
@@ -770,7 +687,6 @@ function openFullArticle() {
   const url = getArticleUrl(selected.value);
   if (url) window.open(url, "_blank", "noopener,noreferrer");
 }
-
 watch(
   filteredArticles,
   (l) => {
@@ -786,7 +702,6 @@ watch(
   },
   { immediate: true },
 );
-
 watch(
   filteredArticles,
   async () => {
@@ -796,22 +711,20 @@ watch(
   },
   { deep: true },
 );
-
 defineExpose({ fetchArticles, loading, error });
 </script>
+
 <style scoped>
 .grid-wrapper {
   flex: 1;
   background: #f7f7f5;
   padding: 16px;
 }
-
 .cluster-section {
   background: #fefefd;
   border: 1.5px solid #111;
   margin-bottom: 16px;
 }
-
 .cluster-header {
   display: flex;
   justify-content: space-between;
@@ -824,7 +737,6 @@ defineExpose({ fetchArticles, loading, error });
   font-size: 9px;
   font-weight: 700;
 }
-
 .legend {
   display: flex;
   gap: 12px;
@@ -833,20 +745,17 @@ defineExpose({ fetchArticles, loading, error });
   align-items: center;
   flex-wrap: wrap;
 }
-
 .legend i {
   display: inline-block;
   width: 8px;
   height: 8px;
   margin-right: 4px;
 }
-
 .active-filters {
   display: flex;
   gap: 6px;
   align-items: center;
 }
-
 .filter-chip {
   font-family: "IBM Plex Mono", monospace;
   font-size: 8px;
@@ -857,11 +766,6 @@ defineExpose({ fetchArticles, loading, error });
   border: none;
   cursor: pointer;
 }
-
-.filter-chip:hover {
-  background: #e54a10;
-}
-
 .btn-reset {
   font-family: "IBM Plex Mono", monospace;
   font-size: 8px;
@@ -873,15 +777,22 @@ defineExpose({ fetchArticles, loading, error });
   cursor: pointer;
 }
 
-.btn-reset:hover {
-  background: #333;
-}
-
+/* CURSOR ALWAYS POINTER */
 .graph-canvas {
   width: 100%;
   height: 460px;
   position: relative;
   overflow: hidden;
+  background: #fefefd;
+  cursor: pointer !important;
+}
+.graph-canvas *,
+.graph-canvas canvas,
+.graph-canvas div {
+  cursor: pointer !important;
+}
+.node-label {
+  pointer-events: none !important;
 }
 
 .zoom-controls {
@@ -896,7 +807,6 @@ defineExpose({ fetchArticles, loading, error });
   border: 1.5px solid #111;
   box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
 }
-
 .zoom-btn {
   width: 32px;
   height: 32px;
@@ -911,27 +821,12 @@ defineExpose({ fetchArticles, loading, error });
   align-items: center;
   justify-content: center;
   color: #111;
-  transition: background 0.1s;
 }
-
 .zoom-btn:last-child {
   border-bottom: none;
 }
-
-.zoom-btn:hover {
-  background: #f7f7f5;
-}
-
-.zoom-btn:active {
-  background: #e5e2de;
-}
-
 .reset-btn {
   font-size: 14px;
-}
-
-.node-label {
-  pointer-events: none !important;
 }
 
 .grid {
@@ -940,7 +835,6 @@ defineExpose({ fetchArticles, loading, error });
   gap: 12px;
   align-content: start;
 }
-
 .card {
   background: #fefefd;
   padding: 16px 16px 12px;
@@ -953,13 +847,11 @@ defineExpose({ fetchArticles, loading, error });
   transition: all 0.18s ease;
   border: 1px solid #e5e2de;
 }
-
 .card:hover {
   transform: translateY(-2px);
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
   z-index: 2;
 }
-
 .bookmark-line {
   position: absolute;
   top: 0;
@@ -968,7 +860,6 @@ defineExpose({ fetchArticles, loading, error });
   height: 100%;
   background: #facc15;
 }
-
 .card-top {
   display: flex;
   justify-content: space-between;
@@ -976,7 +867,6 @@ defineExpose({ fetchArticles, loading, error });
   margin-bottom: 12px;
   flex-shrink: 0;
 }
-
 .card-source {
   display: flex;
   gap: 8px;
@@ -986,17 +876,14 @@ defineExpose({ fetchArticles, loading, error });
   letter-spacing: 0.06em;
   text-transform: uppercase;
 }
-
 .src {
   font-weight: 800;
   color: #111;
   font-size: 9px;
 }
-
 .author {
   color: #999;
 }
-
 .bookmark-badge {
   background: #facc15;
   color: #111;
@@ -1004,19 +891,16 @@ defineExpose({ fetchArticles, loading, error });
   font-weight: 700;
   font-size: 7px;
 }
-
 .card-badges {
   display: flex;
   gap: 4px;
   align-items: center;
 }
-
 .badge {
   font-family: "IBM Plex Mono", monospace;
   font-size: 7px;
   padding: 3px 6px;
 }
-
 .open-btn {
   font-size: 11px;
   color: #999;
@@ -1027,7 +911,6 @@ defineExpose({ fetchArticles, loading, error });
   align-items: center;
   justify-content: center;
 }
-
 .card-title {
   font-size: 13.5px;
   font-weight: 700;
@@ -1042,7 +925,6 @@ defineExpose({ fetchArticles, loading, error });
   margin-bottom: 10px;
   flex-shrink: 0;
 }
-
 .card-summary {
   font-size: 11px;
   line-height: 1.5;
@@ -1057,12 +939,10 @@ defineExpose({ fetchArticles, loading, error });
   margin-bottom: 14px;
   flex-shrink: 0;
 }
-
 .card-foot {
   margin-top: auto;
   flex-shrink: 0;
 }
-
 .foot-labels {
   display: flex;
   justify-content: space-between;
@@ -1073,7 +953,6 @@ defineExpose({ fetchArticles, loading, error });
   text-transform: uppercase;
   gap: 12px;
 }
-
 .foot-values {
   display: flex;
   justify-content: space-between;
@@ -1081,16 +960,13 @@ defineExpose({ fetchArticles, loading, error });
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
 }
-
 .words-value {
   font-weight: 700;
 }
-
 .collected {
   color: #999;
   font-size: 8px;
 }
-
 .collection-label {
   margin-top: 10px;
   display: flex;
@@ -1100,12 +976,10 @@ defineExpose({ fetchArticles, loading, error });
   font-size: 8px;
   font-weight: 600;
 }
-
 .sq {
   width: 6px;
   height: 6px;
 }
-
 .modal {
   position: fixed;
   inset: 0;
@@ -1116,7 +990,6 @@ defineExpose({ fetchArticles, loading, error });
   justify-content: center;
   padding: 20px;
 }
-
 .modal-content {
   background: #fefefd;
   width: 100%;
@@ -1126,7 +999,6 @@ defineExpose({ fetchArticles, loading, error });
   border: 1.5px solid #111;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
-
 .modal-head {
   padding: 24px 24px 0;
   display: flex;
@@ -1136,7 +1008,6 @@ defineExpose({ fetchArticles, loading, error });
   font-size: 9px;
   text-transform: uppercase;
 }
-
 .close {
   cursor: pointer;
   font-size: 14px;
@@ -1147,7 +1018,6 @@ defineExpose({ fetchArticles, loading, error });
   align-items: center;
   justify-content: center;
 }
-
 .modal-title {
   font-size: 22px;
   font-weight: 800;
@@ -1155,14 +1025,12 @@ defineExpose({ fetchArticles, loading, error });
   margin: 16px 24px 12px;
   letter-spacing: -0.02em;
 }
-
 .modal-summary {
   font-size: 14px;
   line-height: 1.6;
   color: #444;
   margin: 0 24px;
 }
-
 .modal-meta {
   padding: 16px 24px;
   background: #faf8f5;
@@ -1173,13 +1041,11 @@ defineExpose({ fetchArticles, loading, error });
   margin-top: 18px;
   flex-wrap: wrap;
 }
-
 .modal-actions {
   padding: 16px 24px;
   display: flex;
   gap: 10px;
 }
-
 .btn-bookmark {
   height: 42px;
   padding: 0 18px;
@@ -1189,22 +1055,10 @@ defineExpose({ fetchArticles, loading, error });
   font-size: 11px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.1s;
 }
-
-.btn-bookmark:hover {
-  background: #f7f7f5;
-}
-
 .btn-bookmark.active {
   background: #facc15;
-  border-color: #111;
 }
-
-.btn-bookmark.active:hover {
-  background: #e6b814;
-}
-
 .btn-black.large {
   flex: 1;
   height: 42px;
@@ -1216,27 +1070,22 @@ defineExpose({ fetchArticles, loading, error });
   border: none;
   cursor: pointer;
 }
-
 .btn-black.large:disabled {
   background: #ccc;
   cursor: not-allowed;
 }
-
 .ml-auto {
   margin-left: auto;
 }
-
 .muted {
   color: #aaa;
 }
-
 .loading-state,
 .error-state {
   font-family: "IBM Plex Mono", monospace;
   font-size: 11px;
   padding: 20px;
 }
-
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -1247,14 +1096,12 @@ defineExpose({ fetchArticles, loading, error });
   background: #fefefd;
   border: 1.5px solid #111;
 }
-
 .empty-icon {
   font-size: 48px;
   color: #e5e2de;
   margin-bottom: 16px;
   font-family: "IBM Plex Mono", monospace;
 }
-
 .empty-title {
   font-family: "IBM Plex Mono", monospace;
   font-size: 14px;
@@ -1263,19 +1110,12 @@ defineExpose({ fetchArticles, loading, error });
   margin-bottom: 8px;
   color: #111;
 }
-
 .empty-message {
   font-size: 12px;
   color: #666;
   margin-bottom: 20px;
   line-height: 1.5;
 }
-
-.empty-message b {
-  color: #111;
-  font-weight: 700;
-}
-
 .btn-clear-search {
   font-family: "IBM Plex Mono", monospace;
   font-size: 10px;
@@ -1285,155 +1125,45 @@ defineExpose({ fetchArticles, loading, error });
   color: #fff;
   border: none;
   cursor: pointer;
-  letter-spacing: 0.04em;
-  transition: background 0.1s;
 }
-
-.btn-clear-search:hover {
-  background: #333;
-}
-
-.btn-clear-search:active {
-  background: #000;
-}
-
-/* ==========================================
-   RESPONSIVE FIXES
-========================================== */
-
 *,
 *::before,
 *::after {
   box-sizing: border-box;
 }
-
 html,
 body {
   width: 100%;
   overflow-x: hidden;
 }
-
-.grid-wrapper {
-  width: 100%;
-  max-width: 100%;
-  overflow-x: hidden;
-}
-
-.cluster-section {
-  width: 100%;
-}
-
-.graph-canvas {
-  width: 100%;
-  height: 460px;
-}
-
-canvas {
-  display: block;
-  max-width: 100%;
-}
-
-.grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
-  gap: 16px;
-  width: 100%;
-}
-
-.card {
-  width: 100%;
-  min-width: 0;
-}
-
-/* ---------- Laptop ---------- */
-
-@media (max-width: 1400px) {
-  .grid {
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  }
-}
-
-/* ---------- Tablet ---------- */
-
 @media (max-width: 1100px) {
   .cluster-header {
     flex-direction: column;
     align-items: flex-start;
   }
-
-  .legend {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
   .graph-canvas {
     height: 400px;
   }
-
-  .grid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  }
 }
-
-/* ---------- Small Tablet ---------- */
-
 @media (max-width: 900px) {
   .grid {
     grid-template-columns: 1fr;
   }
-
   .graph-canvas {
     height: 350px;
   }
 }
-
-/* ---------- Phone ---------- */
-
 @media (max-width: 768px) {
   .grid-wrapper {
     padding: 10px;
   }
-
-  .cluster-header {
-    padding: 12px;
-  }
-
-  .legend {
-    gap: 8px;
-    font-size: 7px;
-  }
-
   .graph-canvas {
     height: 300px;
   }
-
-  .zoom-controls {
-    top: 8px;
-    right: 8px;
-  }
-
-  .modal-content {
-    max-width: 100%;
-  }
 }
-
-/* ---------- Small Phones ---------- */
-
 @media (max-width: 480px) {
   .graph-canvas {
     height: 240px;
-  }
-
-  .card {
-    padding: 12px;
-  }
-
-  .card-title {
-    font-size: 12px;
-  }
-
-  .card-summary {
-    font-size: 10px;
   }
 }
 </style>
