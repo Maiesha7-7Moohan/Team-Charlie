@@ -354,12 +354,14 @@ def clean_all(base_dir):
     raw_dir = os.path.join(base_dir, "data", "raw")
     cleaned_dir = os.path.join(base_dir, "data", "cleaned")
 
-    bbc_articles = load_json(os.path.join(raw_dir, "bbc_raw.json"))
-    cnn_articles = load_json(os.path.join(raw_dir, "cnn_raw.json"))
-    techcrunch_articles = load_json(os.path.join(raw_dir, "techcrunch_raw.json"))
-    coindesk_articles = load_json(os.path.join(raw_dir, "coindesk_raw.json"))
-
-    all_articles = bbc_articles + cnn_articles + techcrunch_articles + coindesk_articles
+    # Reads every "<something>_raw.json" file in data/raw/, so newly added
+    # sites from the Website Manager are picked up automatically instead of
+    # needing a hardcoded list here.
+    all_articles = []
+    if os.path.isdir(raw_dir):
+        for filename in sorted(os.listdir(raw_dir)):
+            if filename.endswith("_raw.json"):
+                all_articles += load_json(os.path.join(raw_dir, filename))
 
     cleaned_articles = []
     seen_links = set()
