@@ -473,7 +473,11 @@ def run():
         links = get_article_links()
         articles = {}
 
-        for link in links:
+        # Cap how many full article pages we fetch per run — the homepage
+        # can contain hundreds of links, and fetching + parsing each one
+        # individually is what was blowing past the server's request timeout.
+        MAX_ARTICLES = 20
+        for link in links[:MAX_ARTICLES]:
             article = extract_article(link)
             if article:
                 articles[article["article_url"]] = article
