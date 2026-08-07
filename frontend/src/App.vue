@@ -84,7 +84,9 @@
         <div>Miscellaneous v0.4.1 © 2026</div>
       </div>
     </div>
+    <ScrapeFab />
   </div>
+
 </template>
 <script setup>
 import { ref, computed } from "vue";
@@ -99,6 +101,7 @@ import EngagementChart from "./Components/EngagementChart.vue";
 import Insights from "./Components/Insights.vue";
 import ProvinceTable from "./Components/ProvinceTable.vue";
 import FilterBar from "./Components/FilterBar.vue";
+import ScrapeFab from "./Components/ScrapeFab.vue";
 
 const showFilters = ref(false);
 const searchQuery = ref(""); // still used by SearchBar up top, unrelated to FilterBar now
