@@ -1,0 +1,25 @@
+# Node
+node_modules/
+frontend/node_modules/
+dist/
+frontend/dist/
+
+# Python
+__pycache__/
+*.pyc
+backend/__pycache__/
+backend/routes/__pycache__/
+backend/scrapers/__pycache__/
+.venv/
+venv/
+
+# Env / secrets
+.env
+*.env.local
+
+# Uploads (runtime-generated)
+backend/uploads/
+
+# OS/editor
+.DS_Store
+.vscode/

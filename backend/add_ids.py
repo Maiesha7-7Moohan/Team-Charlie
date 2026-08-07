@@ -1,0 +1,6 @@
+[
+  { "name": "BBC", "url": "https://www.bbc.com/news" },
+  { "name": "CNN", "url": "https://www.cnn.com" },
+  { "name": "TechCrunch", "url": "https://techcrunch.com" },
+  { "name": "CoinDesk", "url": "https://www.coindesk.com" }
+]
