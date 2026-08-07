@@ -75,7 +75,6 @@
               @click.stop="toggleBookmark(a)"
               :title="a.bookmarked ? 'Remove bookmark' : 'Bookmark this article'"
             >{{ a.bookmarked ? "★" : "☆" }}</button>
-            <span class="open-btn">:arrow_upper_right:</span>
           </div>
         </div>
         <div class="card-title">{{ a.title }}</div>
@@ -900,7 +899,7 @@ defineExpose({ fetchArticles, loading, error });
 }
 .card-badges {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
 }
 .badge {
@@ -912,12 +911,12 @@ defineExpose({ fetchArticles, loading, error });
 .card-bookmark-btn {
   border: 1px solid #E5E2DE;
   background: #fff;
-  width: 18px;
-  height: 18px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 15px;
   line-height: 1;
   color: #999;
   cursor: pointer;
