@@ -73,8 +73,12 @@
               class="card-bookmark-btn"
               :class="{ active: a.bookmarked }"
               @click.stop="toggleBookmark(a)"
-              :title="a.bookmarked ? 'Remove bookmark' : 'Bookmark this article'"
-            >{{ a.bookmarked ? "★" : "☆" }}</button>
+              :title="
+                a.bookmarked ? 'Remove bookmark' : 'Bookmark this article'
+              "
+            >
+              {{ a.bookmarked ? "★" : "☆" }}
+            </button>
             <span class="open-btn">:arrow_upper_right:</span>
           </div>
         </div>
@@ -910,7 +914,7 @@ defineExpose({ fetchArticles, loading, error });
 }
 
 .card-bookmark-btn {
-  border: 1px solid #E5E2DE;
+  border: 1px solid #e5e2de;
   background: #fff;
   width: 18px;
   height: 18px;
@@ -932,9 +936,9 @@ defineExpose({ fetchArticles, loading, error });
 }
 
 .card-bookmark-btn.active {
-  color: #FACC15;
+  color: #facc15;
   border-color: #111;
-  background: #FFFBEA;
+  background: #fffbea;
 }
 
 .open-btn {
