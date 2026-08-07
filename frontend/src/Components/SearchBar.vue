@@ -3,8 +3,7 @@
     <div class="top-header">
       <div class="header-left">
         <div class="brand">
-          <span class="brand-orange">MISCELLANEOUS</span
-          ><span class="brand-muted">COLLECTION INDEX</span>
+          <span class="brand-muted">COLLECTION INDEX</span>
         </div>
         <div class="v-divider"></div>
         <div class="meta-small">
