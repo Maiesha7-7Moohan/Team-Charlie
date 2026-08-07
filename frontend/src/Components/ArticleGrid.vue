@@ -168,7 +168,12 @@ const props = defineProps({
   dateTo: { type: String, default: "" },
   bookmarkedOnly: Boolean,
 });
-const emit = defineEmits(["search-tag", "update:count", "clear-search", "update:meta"]);
+const emit = defineEmits([
+  "search-tag",
+  "update:count",
+  "clear-search",
+  "update:meta",
+]);
 
 const selected = ref(null);
 const articles = ref([]);
@@ -428,10 +433,16 @@ function clearAllFilters() {
 }
 
 function zoomIn() {
-  if (controls) controls.dollyIn(1.2);
+  if (controls) {
+    controls.dollyOut(1.2);
+    controls.update();
+  }
 }
 function zoomOut() {
-  if (controls) controls.dollyOut(1.2);
+  if (controls) {
+    controls.dollyIn(1.2);
+    controls.update();
+  }
 }
 function resetView() {
   fitCameraToGroup();
@@ -1292,147 +1303,137 @@ defineExpose({ fetchArticles, loading, error });
 
 *,
 *::before,
-*::after{
-    box-sizing:border-box;
+*::after {
+  box-sizing: border-box;
 }
 
 html,
-body{
-    width:100%;
-    overflow-x:hidden;
+body {
+  width: 100%;
+  overflow-x: hidden;
 }
 
-.grid-wrapper{
-    width:100%;
-    max-width:100%;
-    overflow-x:hidden;
+.grid-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
 }
 
-.cluster-section{
-    width:100%;
+.cluster-section {
+  width: 100%;
 }
 
-.graph-canvas{
-    width:100%;
-    height:460px;
+.graph-canvas {
+  width: 100%;
+  height: 460px;
 }
 
-canvas{
-    display:block;
-    max-width:100%;
+canvas {
+  display: block;
+  max-width: 100%;
 }
 
-.grid{
-    display:grid;
-    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
-    gap:16px;
-    width:100%;
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+  width: 100%;
 }
 
-.card{
-    width:100%;
-    min-width:0;
+.card {
+  width: 100%;
+  min-width: 0;
 }
 
 /* ---------- Laptop ---------- */
 
-@media (max-width:1400px){
-
-    .grid{
-        grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
-    }
-
+@media (max-width: 1400px) {
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  }
 }
 
 /* ---------- Tablet ---------- */
 
-@media (max-width:1100px){
+@media (max-width: 1100px) {
+  .cluster-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 
-    .cluster-header{
-        flex-direction:column;
-        align-items:flex-start;
-    }
+  .legend {
+    width: 100%;
+    justify-content: flex-start;
+  }
 
-    .legend{
-        width:100%;
-        justify-content:flex-start;
-    }
+  .graph-canvas {
+    height: 400px;
+  }
 
-    .graph-canvas{
-        height:400px;
-    }
-
-    .grid{
-        grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
-    }
-
+  .grid {
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  }
 }
 
 /* ---------- Small Tablet ---------- */
 
-@media (max-width:900px){
+@media (max-width: 900px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
 
-    .grid{
-        grid-template-columns:1fr;
-    }
-
-    .graph-canvas{
-        height:350px;
-    }
-
+  .graph-canvas {
+    height: 350px;
+  }
 }
 
 /* ---------- Phone ---------- */
 
-@media (max-width:768px){
+@media (max-width: 768px) {
+  .grid-wrapper {
+    padding: 10px;
+  }
 
-    .grid-wrapper{
-        padding:10px;
-    }
+  .cluster-header {
+    padding: 12px;
+  }
 
-    .cluster-header{
-        padding:12px;
-    }
+  .legend {
+    gap: 8px;
+    font-size: 7px;
+  }
 
-    .legend{
-        gap:8px;
-        font-size:7px;
-    }
+  .graph-canvas {
+    height: 300px;
+  }
 
-    .graph-canvas{
-        height:300px;
-    }
+  .zoom-controls {
+    top: 8px;
+    right: 8px;
+  }
 
-    .zoom-controls{
-        top:8px;
-        right:8px;
-    }
-
-    .modal-content{
-        max-width:100%;
-    }
-
+  .modal-content {
+    max-width: 100%;
+  }
 }
 
 /* ---------- Small Phones ---------- */
 
-@media (max-width:480px){
+@media (max-width: 480px) {
+  .graph-canvas {
+    height: 240px;
+  }
 
-    .graph-canvas{
-        height:240px;
-    }
+  .card {
+    padding: 12px;
+  }
 
-    .card{
-        padding:12px;
-    }
+  .card-title {
+    font-size: 12px;
+  }
 
-    .card-title{
-        font-size:12px;
-    }
-
-    .card-summary{
-        font-size:10px;
-    }
-
+  .card-summary {
+    font-size: 10px;
+  }
 }
 </style>
