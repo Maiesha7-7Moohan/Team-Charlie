@@ -68,18 +68,6 @@
           </div>
           <div class="card-badges">
             <span class="badge" :style="a.badgeStyle">{{ a.badge }}</span>
-            <button
-              type="button"
-              class="card-bookmark-btn"
-              :class="{ active: a.bookmarked }"
-              @click.stop="toggleBookmark(a)"
-              :title="
-                a.bookmarked ? 'Remove bookmark' : 'Bookmark this article'
-              "
-            >
-              {{ a.bookmarked ? "★" : "☆" }}
-            </button>
-            <span class="open-btn">:arrow_upper_right:</span>
           </div>
         </div>
         <div class="card-title">{{ a.title }}</div>
