@@ -1,15 +1,27 @@
 <template>
   <div class="manager-card">
-    <h3>Manage Target Sites</h3>
+    <div class="manager-head">
+      <h3>Manage Target Sites</h3>
+      <span v-if="lastRun" class="last-run">Last scrape: {{ formatTime(lastRun.timestamp) }}</span>
+    </div>
 
-    <ul class="site-list" v-if="websites.length">
+    <p v-if="loadError" class="banner error">{{ loadError }}</p>
+
+    <div v-if="loading" class="empty-state">Loading sites…</div>
+
+    <ul class="site-list" v-else-if="websites.length">
       <li class="site-item" v-for="(site, index) in websites" :key="index">
-        <span class="site-dot"></span>
+        <span class="site-dot" :class="statusClass(site.name)" :title="statusTitle(site.name)"></span>
         <div class="site-info">
           <span class="site-name">{{ site.name }}</span>
           <span class="site-url">{{ site.url }}</span>
         </div>
-        <button type="button" class="site-delete" @click="removeSite(index)">&times;</button>
+        <button
+          type="button"
+          class="site-delete"
+          :disabled="deletingIndex === index"
+          @click="removeSite(index)"
+        >&times;</button>
       </li>
     </ul>
     <p class="empty-state" v-else>No sites configured yet.</p>
@@ -17,7 +29,10 @@
     <form class="add-site-form" @submit.prevent="addSite">
       <input v-model="newName" placeholder="Site name" required />
       <input v-model="newUrl" placeholder="https://..." required />
-      <button type="submit">+ Add Site</button>
+      <p v-if="formError" class="banner error small">{{ formError }}</p>
+      <button type="submit" :disabled="submitting">
+        {{ submitting ? "Adding…" : "+ Add Site" }}
+      </button>
     </form>
   </div>
 </template>
@@ -30,21 +45,116 @@ const websites = ref([]);
 const newName = ref("");
 const newUrl = ref("");
 
-async function loadWebsites() {
-  const res = await api.get("/websites");
-  websites.value = res.data;
+const loading = ref(true);
+const loadError = ref("");
+const formError = ref("");
+const submitting = ref(false);
+const deletingIndex = ref(-1);
+const lastRun = ref(null);
+
+function isValidUrl(value) {
+  try {
+    const u = new URL(value);
+    return u.protocol === "http:" || u.protocol === "https:";
+  } catch {
+    return false;
+  }
 }
+
+// Looks up how this site did in the most recent "Scrape Now" run.
+function statusClass(name) {
+  if (!lastRun.value) return "unknown";
+  const result = (lastRun.value.results || []).find((r) => r.source === name);
+  if (!result) return "unknown";
+  return result.success ? "ok" : "fail";
+}
+
+function statusTitle(name) {
+  if (!lastRun.value) return "Not scraped yet";
+  const result = (lastRun.value.results || []).find((r) => r.source === name);
+  if (!result) return "Not included in the last scrape";
+  return result.success ? "Last scrape succeeded" : `Last scrape failed: ${result.message || ""}`;
+}
+
+function formatTime(ts) {
+  if (!ts) return "";
+  return new Date(ts).toLocaleString();
+}
+
+async function loadWebsites() {
+  loading.value = true;
+  loadError.value = "";
+  try {
+    const res = await api.get("/websites");
+    websites.value = res.data;
+  } catch (err) {
+    console.error("Failed to load websites:", err);
+    loadError.value = "Couldn't load sites. Check the backend connection.";
+  } finally {
+    loading.value = false;
+  }
+}
+
+async function loadLastRun() {
+  try {
+    const res = await api.get("/history");
+    const history = res.data || [];
+    lastRun.value = history.length ? history[history.length - 1] : null;
+  } catch (err) {
+    console.error("Failed to load scrape history:", err);
+  }
+}
+
 async function addSite() {
-  const res = await api.post("/websites", { name: newName.value, url: newUrl.value });
-  websites.value.push(res.data);   // show it immediately, no re-fetch needed
-  newName.value = ""; newUrl.value = "";
+  formError.value = "";
+
+  const name = newName.value.trim();
+  const url = newUrl.value.trim();
+
+  if (!isValidUrl(url)) {
+    formError.value = "Enter a valid URL, starting with http:// or https://";
+    return;
+  }
+
+  const duplicate = websites.value.some(
+    (s) => s.name.toLowerCase() === name.toLowerCase() || s.url === url
+  );
+  if (duplicate) {
+    formError.value = "That site is already in the list.";
+    return;
+  }
+
+  submitting.value = true;
+  try {
+    const res = await api.post("/websites", { name, url });
+    websites.value.push(res.data);
+    newName.value = "";
+    newUrl.value = "";
+  } catch (err) {
+    console.error("Failed to add site:", err);
+    formError.value = "Couldn't add that site. Try again.";
+  } finally {
+    submitting.value = false;
+  }
 }
 
 async function removeSite(index) {
-  await api.delete(`/websites/${index}`);
-  websites.value.splice(index, 1);  // remove it immediately
+  deletingIndex.value = index;
+  try {
+    await api.delete(`/websites/${index}`);
+    websites.value.splice(index, 1);
+  } catch (err) {
+    console.error("Failed to remove site:", err);
+    loadError.value = "Couldn't remove that site. Try again.";
+  } finally {
+    deletingIndex.value = -1;
+  }
 }
-onMounted(loadWebsites);
+
+onMounted(() => {
+  loadWebsites();
+  loadLastRun();
+});
 </script>
 
 <style scoped>
@@ -63,6 +173,35 @@ onMounted(loadWebsites);
   transition: all 0.18s ease;
 }
 
+.manager-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.last-run {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 9px;
+  color: #999;
+  white-space: nowrap;
+}
+
+.banner {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  padding: 8px 10px;
+  margin: 8px 0 0;
+  border: 1px solid #EF4444;
+  background: #FEF2F2;
+  color: #991B1B;
+}
+
+.banner.small {
+  margin-top: 0;
+}
+
 .site-delete {
   margin-left: auto;
   border: none;
@@ -70,6 +209,11 @@ onMounted(loadWebsites);
   color: #999;
   font-size: 16px;
   cursor: pointer;
+}
+
+.site-delete:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
 }
 
 .manager-card:hover {
@@ -112,8 +256,20 @@ onMounted(loadWebsites);
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #22C55E;
+  background: #ccc; /* unknown by default */
   flex-shrink: 0;
+}
+
+.site-dot.ok {
+  background: #22C55E;
+}
+
+.site-dot.fail {
+  background: #EF4444;
+}
+
+.site-dot.unknown {
+  background: #ccc;
 }
 
 .site-info {
@@ -185,6 +341,12 @@ onMounted(loadWebsites);
 
 .add-site-form button:hover {
   background: #333;
+}
+
+.add-site-form button:disabled {
+  background: #999;
+  border-color: #999;
+  cursor: not-allowed;
 }
 
 @media (max-width: 480px) {

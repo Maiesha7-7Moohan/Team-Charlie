@@ -67,8 +67,15 @@
             ><span v-if="a.bookmarked" class="bookmark-badge">SAVED</span>
           </div>
           <div class="card-badges">
-            <span class="badge" :style="a.badgeStyle">{{ a.badge }}</span
-            ><span class="open-btn">↗</span>
+            <span class="badge" :style="a.badgeStyle">{{ a.badge }}</span>
+            <button
+              type="button"
+              class="card-bookmark-btn"
+              :class="{ active: a.bookmarked }"
+              @click.stop="toggleBookmark(a)"
+              :title="a.bookmarked ? 'Remove bookmark' : 'Bookmark this article'"
+            >{{ a.bookmarked ? "★" : "☆" }}</button>
+            <span class="open-btn">:arrow_upper_right:</span>
           </div>
         </div>
         <div class="card-title">{{ a.title }}</div>
@@ -901,6 +908,35 @@ defineExpose({ fetchArticles, loading, error });
   font-size: 7px;
   padding: 3px 6px;
 }
+
+.card-bookmark-btn {
+  border: 1px solid #E5E2DE;
+  background: #fff;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  line-height: 1;
+  color: #999;
+  cursor: pointer;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.12s ease;
+}
+
+.card-bookmark-btn:hover {
+  border-color: #111;
+  color: #111;
+}
+
+.card-bookmark-btn.active {
+  color: #FACC15;
+  border-color: #111;
+  background: #FFFBEA;
+}
+
 .open-btn {
   font-size: 11px;
   color: #999;
