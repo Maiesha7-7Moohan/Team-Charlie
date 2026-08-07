@@ -892,7 +892,7 @@ defineExpose({ fetchArticles, loading, error });
 }
 .card-badges {
   display: flex;
-  gap: 4px;
+  gap: 6px;
   align-items: center;
 }
 .badge {
@@ -904,12 +904,12 @@ defineExpose({ fetchArticles, loading, error });
 .card-bookmark-btn {
   border: 1px solid #e5e2de;
   background: #fff;
-  width: 18px;
-  height: 18px;
+  width: 26px;
+  height: 26px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 11px;
+  font-size: 15px;
   line-height: 1;
   color: #999;
   cursor: pointer;
