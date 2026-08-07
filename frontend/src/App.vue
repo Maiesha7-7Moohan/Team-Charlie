@@ -57,18 +57,18 @@
             @clear="clearAll"
           />
         </div>
-          <ArticleGrid
-            :search="searchQuery"
-            :sort="sortBy"
-            :categories="selectedCategories"
-            :author="selectedAuthor"
-            :date-from="dateFrom"
-            :date-to="dateTo"
-            :bookmarked-only="bookmarkedOnly"
-            @update:count="handleCountUpdate"
-            @update:meta="handleMeta"
-            @search-tag="searchQuery = $event"
-          />
+        <ArticleGrid
+          :search="searchQuery"
+          :sort="sortBy"
+          :categories="selectedCategories"
+          :author="selectedAuthor"
+          :date-from="dateFrom"
+          :date-to="dateTo"
+          :bookmarked-only="bookmarkedOnly"
+          @update:count="handleCountUpdate"
+          @update:meta="handleMeta"
+          @search-tag="searchQuery = $event"
+        />
       </div>
 
       <div class="footer">
@@ -81,12 +81,11 @@
             {{ bookmarkedCount }} bookmarked
           </span>
         </div>
-        <div>Miscellaneous v0.4.1 © 2026</div>
+        <div>Lightning News v0.4.1 © 2026</div>
       </div>
     </div>
     <ScrapeFab />
   </div>
-
 </template>
 <script setup>
 import { ref, computed } from "vue";
@@ -321,57 +320,55 @@ async function handleExport(format) {
 
 /* ================= MOBILE ================= */
 @media (max-width: 768px) {
-
-  *{
-    box-sizing:border-box;
+  * {
+    box-sizing: border-box;
   }
 
-  .page-root{
-    width:100%;
-    overflow-x:hidden;
+  .page-root {
+    width: 100%;
+    overflow-x: hidden;
   }
 
-  .dashboard{
-    padding:10px;
+  .dashboard {
+    padding: 10px;
   }
 
   .charts-row,
-  .bottom-row{
-    display:flex;
-    flex-direction:column;
-    gap:15px;
-    padding:10px;
+  .bottom-row {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    padding: 10px;
   }
 
-  .charts-row>*,
-  .bottom-row>*{
-    width:100%;
-    min-width:0;
-    flex:none;
+  .charts-row > *,
+  .bottom-row > * {
+    width: 100%;
+    min-width: 0;
+    flex: none;
   }
 
-  .main-layout{
-    display:block;
-    width:100%;
+  .main-layout {
+    display: block;
+    width: 100%;
   }
 
-  .app-root{
-    overflow-x:hidden;
+  .app-root {
+    overflow-x: hidden;
   }
 
-  .footer{
-    flex-direction:column;
-    align-items:flex-start;
-    gap:8px;
-    height:auto;
-    padding:10px;
+  .footer {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+    height: auto;
+    padding: 10px;
   }
 
   img,
-  canvas{
-    max-width:100%;
-    height:auto;
+  canvas {
+    max-width: 100%;
+    height: auto;
   }
-
 }
 </style>

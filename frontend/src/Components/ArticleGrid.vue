@@ -909,7 +909,7 @@ defineExpose({ fetchArticles, loading, error });
 }
 
 .card-bookmark-btn {
-  border: 1px solid #E5E2DE;
+  border: 1px solid #e5e2de;
   background: #fff;
   width: 26px;
   height: 26px;
@@ -931,9 +931,9 @@ defineExpose({ fetchArticles, loading, error });
 }
 
 .card-bookmark-btn.active {
-  color: #FACC15;
+  color: #facc15;
   border-color: #111;
-  background: #FFFBEA;
+  background: #fffbea;
 }
 
 .open-btn {
