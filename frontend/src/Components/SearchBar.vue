@@ -464,7 +464,7 @@ function emitFilterChange() {
   gap: 12px;
   align-items: center;
   background: #fefefd;
-  width: 100%;
+  width: 95%;
 }
 .filter-trigger-btn {
   height: 38px;
