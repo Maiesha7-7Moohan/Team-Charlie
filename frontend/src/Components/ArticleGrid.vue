@@ -158,15 +158,17 @@ import {
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import api from "../services/api";
 
+// after
 const props = defineProps({
   search: String,
   sort: String,
-  category: String,
-  status: { type: Array, default: () => [] },
-  priority: { type: Array, default: () => [] },
-  bookmarkedOnly: Boolean, // was flaggedOnly
+  categories: { type: Array, default: () => [] },
+  author: { type: String, default: "" },
+  dateFrom: { type: String, default: "" },
+  dateTo: { type: String, default: "" },
+  bookmarkedOnly: Boolean,
 });
-const emit = defineEmits(["search-tag", "update:count", "clear-search"]);
+const emit = defineEmits(["search-tag", "update:count", "clear-search", "update:meta"]);
 
 const selected = ref(null);
 const articles = ref([]);
@@ -677,27 +679,47 @@ onBeforeUnmount(() => {
   labelRenderer?.domElement?.remove();
 });
 
+const availableCategories = computed(() => {
+  const set = new Set(articles.value.map((a) => a.category).filter(Boolean));
+  return [...set].sort();
+});
+const availableAuthors = computed(() => {
+  const set = new Set(articles.value.map((a) => a.author).filter(Boolean));
+  return [...set].sort();
+});
+
+watch(
+  articles,
+  () => {
+    emit("update:meta", {
+      categories: availableCategories.value,
+      authors: availableAuthors.value,
+    });
+  },
+  { immediate: true },
+);
+
 const filteredArticles = computed(() => {
   let list = articles.value.filter((a) => {
     if (props.bookmarkedOnly && !a.bookmarked) return false;
     if (
-      props.category &&
-      props.category !== "All Sources" &&
-      a.source.toUpperCase() !== props.category.toUpperCase()
+      props.categories &&
+      props.categories.length > 0 &&
+      !props.categories.includes(a.category)
     )
       return false;
-    if (
-      props.status &&
-      props.status.length > 0 &&
-      !props.status.includes(a.status)
-    )
-      return false;
-    if (
-      props.priority &&
-      props.priority.length > 0 &&
-      !props.priority.includes(a.priority)
-    )
-      return false;
+    if (props.author && a.author !== props.author) return false;
+    if (props.dateFrom) {
+      const d = new Date(a.collected);
+      const from = new Date(props.dateFrom);
+      if (!isNaN(d) && !isNaN(from) && d < from) return false;
+    }
+    if (props.dateTo) {
+      const d = new Date(a.collected);
+      const to = new Date(props.dateTo);
+      to.setHours(23, 59, 59, 999); // include the whole "to" day
+      if (!isNaN(d) && !isNaN(to) && d > to) return false;
+    }
     if (props.search) {
       const q = props.search.toLowerCase();
       const haystack =
@@ -1262,5 +1284,155 @@ defineExpose({ fetchArticles, loading, error });
 
 .btn-clear-search:active {
   background: #000;
+}
+
+/* ==========================================
+   RESPONSIVE FIXES
+========================================== */
+
+*,
+*::before,
+*::after{
+    box-sizing:border-box;
+}
+
+html,
+body{
+    width:100%;
+    overflow-x:hidden;
+}
+
+.grid-wrapper{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+}
+
+.cluster-section{
+    width:100%;
+}
+
+.graph-canvas{
+    width:100%;
+    height:460px;
+}
+
+canvas{
+    display:block;
+    max-width:100%;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:16px;
+    width:100%;
+}
+
+.card{
+    width:100%;
+    min-width:0;
+}
+
+/* ---------- Laptop ---------- */
+
+@media (max-width:1400px){
+
+    .grid{
+        grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    }
+
+}
+
+/* ---------- Tablet ---------- */
+
+@media (max-width:1100px){
+
+    .cluster-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .legend{
+        width:100%;
+        justify-content:flex-start;
+    }
+
+    .graph-canvas{
+        height:400px;
+    }
+
+    .grid{
+        grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    }
+
+}
+
+/* ---------- Small Tablet ---------- */
+
+@media (max-width:900px){
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .graph-canvas{
+        height:350px;
+    }
+
+}
+
+/* ---------- Phone ---------- */
+
+@media (max-width:768px){
+
+    .grid-wrapper{
+        padding:10px;
+    }
+
+    .cluster-header{
+        padding:12px;
+    }
+
+    .legend{
+        gap:8px;
+        font-size:7px;
+    }
+
+    .graph-canvas{
+        height:300px;
+    }
+
+    .zoom-controls{
+        top:8px;
+        right:8px;
+    }
+
+    .modal-content{
+        max-width:100%;
+    }
+
+}
+
+/* ---------- Small Phones ---------- */
+
+@media (max-width:480px){
+
+    .graph-canvas{
+        height:240px;
+    }
+
+    .card{
+        padding:12px;
+    }
+
+    .card-title{
+        font-size:12px;
+    }
+
+    .card-summary{
+        font-size:10px;
+    }
+
 }
 </style>

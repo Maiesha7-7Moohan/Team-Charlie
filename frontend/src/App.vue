@@ -45,31 +45,30 @@
         >
           <FilterBar
             :is-open="showFilters"
-            :search="searchQuery"
             :sort="sortBy"
-            :category="selectedCategory"
-            :status="selectedStatus"
-            :priority="selectedPriority"
-            @update:search="searchQuery = $event"
-            @update:sort="sortBy = $event"
-            @update:category="selectedCategory = $event"
-            @update:status="selectedStatus = $event"
-            @update:priority="selectedPriority = $event"
+            :categories="allCategories"
+            :authors="allAuthors"
+            :selected-categories="selectedCategories"
+            :selected-author="selectedAuthor"
+            :date-from="dateFrom"
+            :date-to="dateTo"
+            @apply="handleApplyFilters"
             @close="showFilters = false"
             @clear="clearAll"
           />
         </div>
-
-        <ArticleGrid
-          :search="searchQuery"
-          :sort="sortBy"
-          :category="selectedCategory"
-          :status="selectedStatus"
-          :priority="selectedPriority"
-          :bookmarked-only="bookmarkedOnly"
-          @update:count="handleCountUpdate"
-          @search-tag="searchQuery = $event"
-        />
+          <ArticleGrid
+            :search="searchQuery"
+            :sort="sortBy"
+            :categories="selectedCategories"
+            :author="selectedAuthor"
+            :date-from="dateFrom"
+            :date-to="dateTo"
+            :bookmarked-only="bookmarkedOnly"
+            @update:count="handleCountUpdate"
+            @update:meta="handleMeta"
+            @search-tag="searchQuery = $event"
+          />
       </div>
 
       <div class="footer">
@@ -87,8 +86,7 @@
     </div>
   </div>
 </template>
-
-<script setup lang="ts">
+<script setup>
 import { ref, computed } from "vue";
 import api from "./services/api";
 import WebsiteManager from "./Components/WebsiteManager.vue";
@@ -102,19 +100,24 @@ import Insights from "./Components/Insights.vue";
 import ProvinceTable from "./Components/ProvinceTable.vue";
 import FilterBar from "./Components/FilterBar.vue";
 
-interface CountPayload {
-  count?: number;
-  bookmarked?: number;
-  sources?: number;
-  totalBookmarked?: number;
-}
-
 const showFilters = ref(false);
-const searchQuery = ref("");
+const searchQuery = ref(""); // still used by SearchBar up top, unrelated to FilterBar now
 const sortBy = ref("newest");
-const selectedCategory = ref("All Sources");
-const selectedStatus = ref<string[]>([]);
-const selectedPriority = ref<string[]>([]);
+
+// Replaces selectedCategory/selectedStatus/selectedPriority:
+// after
+const allCategories = ref([]);
+const allAuthors = ref([]);
+
+function handleMeta(meta) {
+  allCategories.value = meta.categories;
+  allAuthors.value = meta.authors;
+}
+const selectedCategories = ref([]);
+const selectedAuthor = ref("");
+const dateFrom = ref("");
+const dateTo = ref("");
+
 const bookmarkedOnly = ref(false);
 const syncTime = ref("09:22");
 
@@ -125,14 +128,23 @@ const bookmarkedTotal = ref(3);
 
 const hasActiveFilters = computed(
   () =>
-    selectedCategory.value !== "All Sources" ||
-    selectedStatus.value.length > 0 ||
-    selectedPriority.value.length > 0 ||
+    selectedCategories.value.length > 0 ||
+    selectedAuthor.value !== "" ||
+    dateFrom.value !== "" ||
+    dateTo.value !== "" ||
     bookmarkedOnly.value ||
     searchQuery.value.trim().length > 0,
 );
 
-function handleCountUpdate(payload: number | CountPayload) {
+function handleApplyFilters(payload) {
+  sortBy.value = payload.sort;
+  selectedCategories.value = payload.categories;
+  selectedAuthor.value = payload.author;
+  dateFrom.value = payload.dateFrom;
+  dateTo.value = payload.dateTo;
+}
+
+function handleCountUpdate(payload) {
   if (typeof payload === "number") {
     filteredCount.value = payload;
   } else if (payload && typeof payload === "object") {
@@ -144,47 +156,44 @@ function handleCountUpdate(payload: number | CountPayload) {
   }
 }
 
-function handleFilterChange(payload: {
-  search: string;
-  bookmarkedOnly: boolean;
-}) {
+function handleFilterChange(payload) {
   searchQuery.value = payload.search;
   bookmarkedOnly.value = payload.bookmarkedOnly;
 }
 
 function clearAll() {
   searchQuery.value = "";
-  selectedCategory.value = "All Sources";
-  selectedStatus.value = [];
-  selectedPriority.value = [];
+  selectedCategories.value = [];
+  selectedAuthor.value = "";
+  dateFrom.value = "";
+  dateTo.value = "";
   bookmarkedOnly.value = false;
   showFilters.value = false;
 }
 
-async function handleExport(format: string) {
+async function handleExport(format) {
   try {
-    // Pass current filters to API so export matches what's filtered
     const params = new URLSearchParams({
       search: searchQuery.value,
       sort: sortBy.value,
-      category: selectedCategory.value,
       bookmarkedOnly: String(bookmarkedOnly.value),
     });
 
-    if (selectedStatus.value.length)
-      params.append("status", selectedStatus.value.join(","));
-    if (selectedPriority.value.length)
-      params.append("priority", selectedPriority.value.join(","));
+    if (selectedCategories.value.length)
+      params.append("categories", selectedCategories.value.join(","));
+    if (selectedAuthor.value) params.append("author", selectedAuthor.value);
+    if (dateFrom.value) params.append("dateFrom", dateFrom.value);
+    if (dateTo.value) params.append("dateTo", dateTo.value);
 
     const { data } = await api.get(`/items?${params.toString()}`);
     const articles = data.items;
 
     if (!articles || articles.length === 0) return;
 
-    let blob: Blob;
+    let blob;
     if (format === "csv") {
       const header = Object.keys(articles[0]).join(",");
-      const rows = articles.map((a: Record<string, unknown>) =>
+      const rows = articles.map((a) =>
         Object.values(a)
           .map((v) => `"${String(v).replace(/"/g, '""')}"`)
           .join(","),
