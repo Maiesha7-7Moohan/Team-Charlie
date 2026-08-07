@@ -7,6 +7,51 @@ from flask import Blueprint, jsonify, request, current_app
 
 items_bp = Blueprint("items", __name__, url_prefix="/api/items")
 
+import csv
+import io
+from flask import Blueprint, jsonify, request, current_app, Response
+
+
+@items_bp.route("/export", methods=["GET"])
+def export_items():
+    data_file = os.path.join(
+        current_app.root_path,
+        "data",
+        "cleaned",
+        "articles_cleaned.json"
+    )
+
+    with open(data_file, "r", encoding="utf-8") as file:
+        articles = json.load(file)
+
+    for index, article in enumerate(articles, start=1):
+        article.setdefault("id", index)
+
+    if not articles:
+        return jsonify({"error": "No items to export"}), 404
+
+    export_format = request.args.get("format", default="csv")
+
+    if export_format == "json":
+        response = Response(
+            json.dumps(articles, indent=2, ensure_ascii=False),
+            mimetype="application/json"
+        )
+        response.headers["Content-Disposition"] = "attachment; filename=articles.json"
+        return response
+
+    # default: csv
+    output = io.StringIO()
+    fieldnames = list(articles[0].keys())
+    writer = csv.DictWriter(output, fieldnames=fieldnames)
+    writer.writeheader()
+    for article in articles:
+        writer.writerow(article)
+
+    response = Response(output.getvalue(), mimetype="text/csv")
+    response.headers["Content-Disposition"] = "attachment; filename=articles.csv"
+    return response
+
 
 @items_bp.route("", methods=["GET"])
 def get_items():

@@ -22,11 +22,46 @@
           </div>
         </div>
       </div>
-      <div ref="canvasContainer" class="graph-canvas"></div>
+      <div ref="canvasContainer" class="graph-canvas">
+        <div class="zoom-controls">
+          <button class="zoom-btn" @click="zoomIn" title="Zoom in">+</button>
+          <button class="zoom-btn" @click="zoomOut" title="Zoom out">−</button>
+          <button
+            class="zoom-btn reset-btn"
+            @click="resetView"
+            title="Reset view"
+          >
+            ⟳
+          </button>
+        </div>
+      </div>
     </div>
 
     <div v-if="loading" class="loading-state">Loading articles...</div>
     <div v-else-if="error" class="error-state">{{ error }}</div>
+
+    <div v-else-if="filteredArticles.length === 0" class="empty-state">
+      <div class="empty-icon">∅</div>
+      <div class="empty-title">NO RESULTS FOUND</div>
+      <div class="empty-message">
+        <span v-if="props.search">
+          No articles match "<b>{{ props.search }}</b
+          >"
+        </span>
+        <span v-else-if="activeFilters.length > 0">
+          No articles match the current filters
+        </span>
+        <span v-else> No articles available </span>
+      </div>
+      <button
+        v-if="props.search || activeFilters.length > 0"
+        class="btn-clear-search"
+        @click="clearAllFilters"
+      >
+        CLEAR FILTERS
+      </button>
+    </div>
+
     <div v-else class="grid">
       <div
         v-for="a in filteredArticles"
@@ -34,12 +69,12 @@
         class="card"
         @click="openArticle(a)"
       >
-        <div v-if="a.flagged" class="flag-line"></div>
+        <div v-if="a.bookmarked" class="bookmark-line"></div>
         <div class="card-top">
           <div class="card-source">
             <span class="src">{{ a.source }}</span
             ><span class="author">| {{ a.author }}</span
-            ><span v-if="a.flagged" class="flag-badge">FLAGGED</span>
+            ><span v-if="a.bookmarked" class="bookmark-badge">SAVED</span>
           </div>
           <div class="card-badges">
             <span class="badge" :style="a.badgeStyle">{{ a.badge }}</span
@@ -48,29 +83,14 @@
         </div>
         <div class="card-title">{{ a.title }}</div>
         <div class="card-summary">{{ a.summary }}</div>
-        <div class="card-tags">
-          <span
-            v-for="tag in a.tags"
-            :key="tag.t"
-            class="tag"
-            :style="tag.s"
-            @click.stop="emit('search-tag', tag.t)"
-            >{{ tag.t }}</span
-          >
-        </div>
         <div class="card-foot">
           <div class="foot-labels">
-            <span>RELEVANCE</span><span>WORDS</span
-            ><span class="ml-auto">COLLECTED</span>
+            <span>WORDS</span><span class="ml-auto">COLLECTED</span>
           </div>
           <div class="foot-values">
-            <div class="relevance">
-              <div class="bar">
-                <div :style="{ width: a.relevance + '%' }"></div>
-              </div>
-              <span>{{ a.relevance }}</span>
-            </div>
-            <span>{{ (a.words || 0).toLocaleString() }}</span
+            <span class="words-value">{{
+              (a.words || 0).toLocaleString()
+            }}</span
             ><span class="collected">{{ a.collected }}</span>
           </div>
           <div class="collection-label" :style="{ color: a.color }">
@@ -93,11 +113,17 @@
         <h1 class="modal-title">{{ selected.title }}</h1>
         <p class="modal-summary">{{ selected.summary }}</p>
         <div class="modal-meta">
-          RELEVANCE: <b>{{ selected.relevance }}</b> WORDS:
-          <b>{{ selected.words }}</b
+          WORDS: <b>{{ selected.words }}</b
           ><span class="ml-auto muted">{{ selected.collected }}</span>
         </div>
         <div class="modal-actions">
+          <button
+            class="btn-bookmark"
+            :class="{ active: selected.bookmarked }"
+            @click.stop="toggleBookmark(selected)"
+          >
+            {{ selected.bookmarked ? "★ SAVED" : "☆ BOOKMARK" }}
+          </button>
           <button
             class="btn-black large"
             :disabled="!getArticleUrl(selected)"
@@ -107,8 +133,8 @@
               getArticleUrl(selected)
                 ? "OPEN FULL ARTICLE ↗"
                 : "NO LINK AVAILABLE"
-            }}</button
-          >
+            }}
+          </button>
         </div>
       </div>
     </div>
@@ -129,17 +155,20 @@ import {
   CSS2DRenderer,
   CSS2DObject,
 } from "three/examples/jsm/renderers/CSS2DRenderer.js";
+import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import api from "../services/api";
 
+// after
 const props = defineProps({
   search: String,
   sort: String,
-  category: String,
-  status: { type: Array, default: () => [] },
-  priority: { type: Array, default: () => [] },
-  flaggedOnly: Boolean,
+  categories: { type: Array, default: () => [] },
+  author: { type: String, default: "" },
+  dateFrom: { type: String, default: "" },
+  dateTo: { type: String, default: "" },
+  bookmarkedOnly: Boolean,
 });
-const emit = defineEmits(["search-tag", "update:count"]);
+const emit = defineEmits(["search-tag", "update:count", "clear-search", "update:meta"]);
 
 const selected = ref(null);
 const articles = ref([]);
@@ -147,7 +176,8 @@ const loading = ref(false);
 const error = ref(null);
 const canvasContainer = ref(null);
 const stats = ref({ total: 0, sites: 0, kw: 0 });
-const activeFilters = ref([]); // [{ type: 'site'|'keyword', id: string, label: string }]
+const activeFilters = ref([]);
+const bookmarkedIds = ref(new Set()); // persistent bookmark IDs
 let scene,
   camera,
   renderer,
@@ -155,7 +185,8 @@ let scene,
   animationId,
   graphGroup,
   raycaster,
-  mouse;
+  mouse,
+  controls;
 const group1Palette = [
   "#ff5a1f",
   "#2d5bff",
@@ -166,6 +197,38 @@ const group1Palette = [
   "#06b6d4",
   "#111",
 ];
+
+const STORAGE_KEY = "article_bookmarks_v1";
+
+function loadBookmarks() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) bookmarkedIds.value = new Set(JSON.parse(raw));
+  } catch (e) {
+    console.warn("Failed to load bookmarks:", e);
+  }
+}
+
+function saveBookmarks() {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify([...bookmarkedIds.value]));
+  } catch (e) {
+    console.warn("Failed to save bookmarks:", e);
+  }
+}
+
+function toggleBookmark(article) {
+  if (bookmarkedIds.value.has(article.id)) {
+    bookmarkedIds.value.delete(article.id);
+    article.bookmarked = false;
+  } else {
+    bookmarkedIds.value.add(article.id);
+    article.bookmarked = true;
+  }
+  saveBookmarks();
+  // Force reactivity
+  articles.value = [...articles.value];
+}
 
 async function getArticles() {
   const { data } = await api.get("/items?limit=1000");
@@ -178,7 +241,6 @@ function getArticleUrl(a) {
 function normalizeArticle(raw, index) {
   const content = raw.article || raw.description || "";
 
-  // Consistent category color map
   const categoryColors = {
     MARKETS: "#ff5a1f",
     AI: "#2d5bff",
@@ -197,7 +259,6 @@ function normalizeArticle(raw, index) {
     color.toUpperCase(),
   );
 
-  // Parse keywords from raw.keywords, raw.tags, or raw.topics - fallback to category if empty
   const keywordSource =
     raw.keywords || raw.tags || raw.topics || raw.category || [];
   const keywords = Array.isArray(keywordSource)
@@ -206,8 +267,9 @@ function normalizeArticle(raw, index) {
       ? keywordSource.split(",").map((k) => k.trim())
       : [];
 
+  const id = raw.id ?? raw.link ?? index;
   return {
-    id: raw.id ?? raw.link ?? index,
+    id,
     source: (raw.source || "WEB").toUpperCase(),
     author: raw.author || "Scraped",
     badge: category,
@@ -226,7 +288,7 @@ function normalizeArticle(raw, index) {
     words: content ? content.split(/\s+/).length : 0,
     collected: raw.published || "",
     collection: raw.source || "SCRAPED",
-    flagged: raw.flagged || false,
+    bookmarked: bookmarkedIds.value.has(id), // load from localStorage
     color,
     category: raw.category || "All Sources",
     status: raw.status || "Active",
@@ -259,12 +321,10 @@ function buildClusterFromList(list) {
         kws.set(label, { id: kwId, label, type: "keyword", count: 0 });
       }
       kws.get(label).count++;
-
       links.push({ source: `site_${a.source}`, target: kwId });
     });
   });
 
-  // Apply activeFilters - strict filtering: only show clicked site + its keywords
   let filteredNodes = [];
   let filteredLinks = links;
 
@@ -272,29 +332,24 @@ function buildClusterFromList(list) {
     const clickedSite = activeFilters.value.find((f) => f.type === "site");
 
     if (clickedSite) {
-      // Show ONLY this site + its connected keywords
       const siteNode = sites.get(clickedSite.label);
       if (siteNode) {
         filteredNodes.push(siteNode);
-        // Find all keywords connected to this site
         const connectedKwIds = new Set();
         links.forEach((l) => {
           if (l.source === clickedSite.id) {
             connectedKwIds.add(l.target);
           }
         });
-        // Add those keyword nodes
         connectedKwIds.forEach((kwId) => {
           const kwLabel = kwId.split("_")[1];
           if (kws.has(kwLabel)) filteredNodes.push(kws.get(kwLabel));
         });
-        // Keep only links from this site to its keywords
         filteredLinks = links.filter(
           (l) => l.source === clickedSite.id && connectedKwIds.has(l.target),
         );
       }
     } else {
-      // Only keyword filters - show keywords + their sites
       const keywordFilters = activeFilters.value.filter(
         (f) => f.type === "keyword",
       );
@@ -314,7 +369,6 @@ function buildClusterFromList(list) {
       );
     }
   } else {
-    // No filters: show top 40 keywords + all sites
     const topKws = [...kws.values()]
       .sort((a, b) => b.count - a.count)
       .slice(0, 40);
@@ -367,6 +421,43 @@ function resetDrillDown() {
   initThree();
 }
 
+function clearAllFilters() {
+  activeFilters.value = [];
+  emit("clear-search");
+  initThree();
+}
+
+function zoomIn() {
+  if (controls) controls.dollyIn(1.2);
+}
+function zoomOut() {
+  if (controls) controls.dollyOut(1.2);
+}
+function resetView() {
+  fitCameraToGroup();
+}
+
+function fitCameraToGroup() {
+  if (!graphGroup || graphGroup.children.length === 0) return;
+
+  const box = new THREE.Box3().setFromObject(graphGroup);
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+
+  const maxDim = Math.max(size.x, size.y, size.z);
+  const fov = camera.fov * (Math.PI / 180);
+  let cameraZ = Math.abs(maxDim / 2 / Math.tan(fov / 2));
+  cameraZ *= 1.3;
+
+  camera.position.set(center.x, center.y, center.z + cameraZ);
+  camera.lookAt(center);
+
+  if (controls) {
+    controls.target.copy(center);
+    controls.update();
+  }
+}
+
 function initThree() {
   if (!canvasContainer.value) return;
   const container = canvasContainer.value;
@@ -375,8 +466,10 @@ function initThree() {
 
   if (renderer) {
     renderer.domElement.removeEventListener("click", handleNodeClick);
-    container.innerHTML = "";
+    controls?.dispose();
     cancelAnimationFrame(animationId);
+    const oldCanvas = container.querySelector("canvas");
+    if (oldCanvas) oldCanvas.remove();
     labelRenderer?.domElement?.remove();
   }
 
@@ -386,21 +479,39 @@ function initThree() {
 
   camera = new THREE.PerspectiveCamera(60, W / H, 0.1, 1000);
   camera.position.set(0, 2, 38);
-  camera.lookAt(0, 0, 0);
 
   renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
   renderer.setSize(W, H);
   renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
   renderer.setClearColor(0x000000, 0);
-  renderer.domElement.style.cursor = "pointer";
-  container.appendChild(renderer.domElement);
+  renderer.domElement.style.cursor = "grab";
+  renderer.domElement.style.display = "block";
+  const zoomCtrls = container.querySelector(".zoom-controls");
+  container.insertBefore(renderer.domElement, zoomCtrls);
+
+  controls = new OrbitControls(camera, renderer.domElement);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.05;
+  controls.screenSpacePanning = false;
+  controls.minDistance = 10;
+  controls.maxDistance = 100;
+  controls.autoRotate = false;
+  controls.enableZoom = false;
+
+  renderer.domElement.addEventListener("mousedown", () => {
+    renderer.domElement.style.cursor = "grabbing";
+  });
+  renderer.domElement.addEventListener("mouseup", () => {
+    renderer.domElement.style.cursor = "grab";
+  });
 
   labelRenderer = new CSS2DRenderer();
   labelRenderer.setSize(W, H);
   labelRenderer.domElement.style.position = "absolute";
   labelRenderer.domElement.style.top = "0px";
   labelRenderer.domElement.style.pointerEvents = "none";
-  container.appendChild(labelRenderer.domElement);
+  labelRenderer.domElement.style.zIndex = "1";
+  container.insertBefore(labelRenderer.domElement, zoomCtrls);
 
   raycaster = new THREE.Raycaster();
   mouse = new THREE.Vector2();
@@ -434,15 +545,11 @@ function initThree() {
   const meshes = [];
 
   nodes.forEach((n, i) => {
-    // Consistent sizes: sites bigger, keywords smaller
     const nodeRadius = n.type === "site" ? 1.6 : 0.6;
-
     const geo = new THREE.SphereGeometry(nodeRadius, 24, 24);
     const mat = n.type === "site" ? siteMat : kwMat;
-
     const mesh = new THREE.Mesh(geo, mat);
 
-    // Initial placement: sites inner ring, keywords outer ring
     let angle, r;
     if (n.type === "site") {
       const siteIndex = siteNodes.indexOf(n);
@@ -464,7 +571,6 @@ function initThree() {
 
     mesh.userData = { ...n, nodeRadius };
 
-    // Add text label
     const labelDiv = document.createElement("div");
     labelDiv.className = "node-label";
     labelDiv.textContent = n.label;
@@ -485,10 +591,8 @@ function initThree() {
     meshes.push(mesh);
   });
 
-  // Collision separation pass - push overlapping spheres apart
   const iterations = 50;
   const padding = 0.4;
-
   for (let iter = 0; iter < iterations; iter++) {
     for (let i = 0; i < meshes.length; i++) {
       for (let j = i + 1; j < meshes.length; j++) {
@@ -502,7 +606,6 @@ function initThree() {
           const dir = new THREE.Vector3()
             .subVectors(a.position, b.position)
             .normalize();
-
           a.position.addScaledVector(dir, overlap * 0.5);
           b.position.addScaledVector(dir, -overlap * 0.5);
         }
@@ -528,10 +631,11 @@ function initThree() {
     graphGroup.add(line);
   });
 
+  fitCameraToGroup();
+
   const animate = () => {
     animationId = requestAnimationFrame(animate);
-    graphGroup.rotation.y += 0.0005;
-    graphGroup.rotation.x += 0.00015;
+    controls.update();
     renderer.render(scene, camera);
     labelRenderer.render(scene, camera);
   };
@@ -550,6 +654,7 @@ function initThree() {
 const fetchArticles = async () => {
   loading.value = true;
   error.value = null;
+  loadBookmarks(); // load saved bookmarks first
   try {
     const res = await getArticles();
     let rawList = Array.isArray(res)
@@ -568,32 +673,53 @@ onMounted(fetchArticles);
 onBeforeUnmount(() => {
   if (renderer)
     renderer.domElement.removeEventListener("click", handleNodeClick);
+  controls?.dispose();
   cancelAnimationFrame(animationId);
   renderer?.dispose();
   labelRenderer?.domElement?.remove();
 });
 
+const availableCategories = computed(() => {
+  const set = new Set(articles.value.map((a) => a.category).filter(Boolean));
+  return [...set].sort();
+});
+const availableAuthors = computed(() => {
+  const set = new Set(articles.value.map((a) => a.author).filter(Boolean));
+  return [...set].sort();
+});
+
+watch(
+  articles,
+  () => {
+    emit("update:meta", {
+      categories: availableCategories.value,
+      authors: availableAuthors.value,
+    });
+  },
+  { immediate: true },
+);
+
 const filteredArticles = computed(() => {
   let list = articles.value.filter((a) => {
-    if (props.flaggedOnly && !a.flagged) return false;
+    if (props.bookmarkedOnly && !a.bookmarked) return false;
     if (
-      props.category &&
-      props.category !== "All Sources" &&
-      a.source.toUpperCase() !== props.category.toUpperCase()
+      props.categories &&
+      props.categories.length > 0 &&
+      !props.categories.includes(a.category)
     )
       return false;
-    if (
-      props.status &&
-      props.status.length > 0 &&
-      !props.status.includes(a.status)
-    )
-      return false;
-    if (
-      props.priority &&
-      props.priority.length > 0 &&
-      !props.priority.includes(a.priority)
-    )
-      return false;
+    if (props.author && a.author !== props.author) return false;
+    if (props.dateFrom) {
+      const d = new Date(a.collected);
+      const from = new Date(props.dateFrom);
+      if (!isNaN(d) && !isNaN(from) && d < from) return false;
+    }
+    if (props.dateTo) {
+      const d = new Date(a.collected);
+      const to = new Date(props.dateTo);
+      to.setHours(23, 59, 59, 999); // include the whole "to" day
+      if (!isNaN(d) && !isNaN(to) && d > to) return false;
+    }
     if (props.search) {
       const q = props.search.toLowerCase();
       const haystack =
@@ -603,7 +729,6 @@ const filteredArticles = computed(() => {
     return true;
   });
 
-  // Apply activeFilters from cluster clicks
   if (activeFilters.value.length > 0) {
     list = list.filter((a) => {
       return activeFilters.value.every((f) => {
@@ -638,15 +763,19 @@ function openFullArticle() {
 watch(
   filteredArticles,
   (l) => {
-    const flagged = l.filter((a) => a.flagged).length;
+    const bookmarked = l.filter((a) => a.bookmarked).length;
     const sources = new Set(l.map((a) => a.source)).size;
-    const totalFlagged = articles.value.filter((a) => a.flagged).length;
-    emit("update:count", { count: l.length, flagged, sources, totalFlagged });
+    const totalBookmarked = articles.value.filter((a) => a.bookmarked).length;
+    emit("update:count", {
+      count: l.length,
+      bookmarked,
+      sources,
+      totalBookmarked,
+    });
   },
   { immediate: true },
 );
 
-// Re-render three.js when filters change
 watch(
   filteredArticles,
   async () => {
@@ -741,6 +870,53 @@ defineExpose({ fetchArticles, loading, error });
   width: 100%;
   height: 460px;
   position: relative;
+  overflow: hidden;
+}
+
+.zoom-controls {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  background: #fefefd;
+  border: 1.5px solid #111;
+  box-shadow: 2px 2px 0 rgba(0, 0, 0, 0.1);
+}
+
+.zoom-btn {
+  width: 32px;
+  height: 32px;
+  background: #fefefd;
+  border: none;
+  border-bottom: 1px solid #e5e2de;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 18px;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #111;
+  transition: background 0.1s;
+}
+
+.zoom-btn:last-child {
+  border-bottom: none;
+}
+
+.zoom-btn:hover {
+  background: #f7f7f5;
+}
+
+.zoom-btn:active {
+  background: #e5e2de;
+}
+
+.reset-btn {
+  font-size: 14px;
 }
 
 .node-label {
@@ -759,7 +935,7 @@ defineExpose({ fetchArticles, loading, error });
   padding: 16px 16px 12px;
   display: flex;
   flex-direction: column;
-  min-height: 260px;
+  min-height: 220px;
   position: relative;
   overflow: hidden;
   cursor: pointer;
@@ -773,13 +949,13 @@ defineExpose({ fetchArticles, loading, error });
   z-index: 2;
 }
 
-.flag-line {
+.bookmark-line {
   position: absolute;
   top: 0;
   left: 0;
   width: 3px;
   height: 100%;
-  background: #ff5a1f;
+  background: #facc15;
 }
 
 .card-top {
@@ -810,8 +986,8 @@ defineExpose({ fetchArticles, loading, error });
   color: #999;
 }
 
-.flag-badge {
-  background: #ff5a1f;
+.bookmark-badge {
+  background: #facc15;
   color: #111;
   padding: 1px 4px;
   font-weight: 700;
@@ -871,25 +1047,6 @@ defineExpose({ fetchArticles, loading, error });
   flex-shrink: 0;
 }
 
-.card-tags {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  min-height: 22px;
-  margin-bottom: 16px;
-  flex-shrink: 0;
-}
-
-.tag {
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 8px;
-  padding: 4px 8px;
-  cursor: pointer;
-  font-weight: 800;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
 .card-foot {
   margin-top: auto;
   flex-shrink: 0;
@@ -914,23 +1071,8 @@ defineExpose({ fetchArticles, loading, error });
   font-size: 10px;
 }
 
-.relevance {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-}
-
-.bar {
-  width: 36px;
-  height: 3px;
-  background: #e5e2de;
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.bar div {
-  height: 100%;
-  background: #111;
+.words-value {
+  font-weight: 700;
 }
 
 .collected {
@@ -1027,6 +1169,31 @@ defineExpose({ fetchArticles, loading, error });
   gap: 10px;
 }
 
+.btn-bookmark {
+  height: 42px;
+  padding: 0 18px;
+  background: #fff;
+  border: 1.5px solid #111;
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.1s;
+}
+
+.btn-bookmark:hover {
+  background: #f7f7f5;
+}
+
+.btn-bookmark.active {
+  background: #facc15;
+  border-color: #111;
+}
+
+.btn-bookmark.active:hover {
+  background: #e6b814;
+}
+
 .btn-black.large {
   flex: 1;
   height: 42px;
@@ -1039,15 +1206,9 @@ defineExpose({ fetchArticles, loading, error });
   cursor: pointer;
 }
 
-.btn-outline {
-  height: 42px;
-  padding: 0 18px;
-  background: #fff;
-  border: 1.5px solid #111;
-  font-family: "IBM Plex Mono", monospace;
-  font-size: 11px;
-  font-weight: 600;
-  cursor: pointer;
+.btn-black.large:disabled {
+  background: #ccc;
+  cursor: not-allowed;
 }
 
 .ml-auto {
@@ -1063,5 +1224,215 @@ defineExpose({ fetchArticles, loading, error });
   font-family: "IBM Plex Mono", monospace;
   font-size: 11px;
   padding: 20px;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 80px 20px;
+  text-align: center;
+  background: #fefefd;
+  border: 1.5px solid #111;
+}
+
+.empty-icon {
+  font-size: 48px;
+  color: #e5e2de;
+  margin-bottom: 16px;
+  font-family: "IBM Plex Mono", monospace;
+}
+
+.empty-title {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  color: #111;
+}
+
+.empty-message {
+  font-size: 12px;
+  color: #666;
+  margin-bottom: 20px;
+  line-height: 1.5;
+}
+
+.empty-message b {
+  color: #111;
+  font-weight: 700;
+}
+
+.btn-clear-search {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 8px 16px;
+  background: #111;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 0.1s;
+}
+
+.btn-clear-search:hover {
+  background: #333;
+}
+
+.btn-clear-search:active {
+  background: #000;
+}
+
+/* ==========================================
+   RESPONSIVE FIXES
+========================================== */
+
+*,
+*::before,
+*::after{
+    box-sizing:border-box;
+}
+
+html,
+body{
+    width:100%;
+    overflow-x:hidden;
+}
+
+.grid-wrapper{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden;
+}
+
+.cluster-section{
+    width:100%;
+}
+
+.graph-canvas{
+    width:100%;
+    height:460px;
+}
+
+canvas{
+    display:block;
+    max-width:100%;
+}
+
+.grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+    gap:16px;
+    width:100%;
+}
+
+.card{
+    width:100%;
+    min-width:0;
+}
+
+/* ---------- Laptop ---------- */
+
+@media (max-width:1400px){
+
+    .grid{
+        grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+    }
+
+}
+
+/* ---------- Tablet ---------- */
+
+@media (max-width:1100px){
+
+    .cluster-header{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .legend{
+        width:100%;
+        justify-content:flex-start;
+    }
+
+    .graph-canvas{
+        height:400px;
+    }
+
+    .grid{
+        grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    }
+
+}
+
+/* ---------- Small Tablet ---------- */
+
+@media (max-width:900px){
+
+    .grid{
+        grid-template-columns:1fr;
+    }
+
+    .graph-canvas{
+        height:350px;
+    }
+
+}
+
+/* ---------- Phone ---------- */
+
+@media (max-width:768px){
+
+    .grid-wrapper{
+        padding:10px;
+    }
+
+    .cluster-header{
+        padding:12px;
+    }
+
+    .legend{
+        gap:8px;
+        font-size:7px;
+    }
+
+    .graph-canvas{
+        height:300px;
+    }
+
+    .zoom-controls{
+        top:8px;
+        right:8px;
+    }
+
+    .modal-content{
+        max-width:100%;
+    }
+
+}
+
+/* ---------- Small Phones ---------- */
+
+@media (max-width:480px){
+
+    .graph-canvas{
+        height:240px;
+    }
+
+    .card{
+        padding:12px;
+    }
+
+    .card-title{
+        font-size:12px;
+    }
+
+    .card-summary{
+        font-size:10px;
+    }
+
 }
 </style>

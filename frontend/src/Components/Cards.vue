@@ -69,10 +69,11 @@ onMounted(async () => {
 <style scoped>
 .dashboard-card-container {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 16px;
   padding: 16px;
-  background: #f7f7f5;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .dashboard-card1,
